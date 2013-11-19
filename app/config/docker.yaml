@@ -1,0 +1,34 @@
+Docker:
+  User: puck
+  Images:
+    php: ~
+    search:
+      ports:
+        - 9200
+      volumes:
+        - search
+    mysql:
+      ports:
+        - 3306
+      volumes:
+        - mysql
+    memcached:
+      ports:
+        - 11211
+    mongo:
+      ports:
+        - 27017
+      volumes:
+        - mongo
+    web:
+      require:
+        - php
+        - mysql
+        - mongo
+        - memcached
+        - search
+      ports:
+        - 80
+        - 22
+      volumes:
+        - docplanner

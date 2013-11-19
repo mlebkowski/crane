@@ -3,6 +3,7 @@
 
 namespace Crane\Docker;
 
+use Crane\Docker\Image\Image;
 use Silex\Application;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
@@ -46,7 +47,9 @@ class Docker
 		$path = $this->app['path.images'];
 		$dir = basename($path);
 		$path = dirname($path);
-		$tarOutput = $this->getLocalExecutor()->executeCommand(sprintf('tar -cf - -C %s %s', escapeshellarg($path), escapeshellarg($dir)));
+
+		$command = sprintf('tar -cf - -C %s %s', escapeshellarg($path), escapeshellarg($dir));
+		$tarOutput = $this->getLocalExecutor()->executeCommand($command);
 		$this->executor->executeCommand(sprintf('tar -xf - -C %s', escapeshellarg($this->tmpPath)), $tarOutput);
 	}
 
@@ -58,6 +61,35 @@ class Docker
 		$this->executor = $executor;
 	}
 
+	public function buildImage(Image $image)
+	{
+		$command = sprintf('docker build -t %s %s/images/%s', $image->getFullName(), $this->tmpPath, $image->getName());
+		$this->executor->executeCommand($command);
+	}
+
+	public function getLastError()
+	{
+		return $this->executor->getLastErrorOutput();
+	}
+	/**
+	 * @param Image $image
+	 * @return bool
+	 */
+	public function isImageBuilt(Image $image)
+	{
+		try
+		{
+			$command = sprintf('docker images | grep -cE "^%s\s"', $image->getFullName());
+			$this->executor->executeCommand($command);
+			return true;
+		}
+		catch (ProcessFailedException $e)
+		{
+			return false;
+		}
+
+	}
+
 	/**
 	 * @return Executor\CommandExecutor
 	 */
@@ -65,4 +97,5 @@ class Docker
 	{
 		return $this->app['executor.command'];
 	}
+
 }
