@@ -1,0 +1,32 @@
+{
+	"name": "mlebkowski/crane",
+	"require": {
+		"silex/silex": "~1.0",
+		"symfony/yaml": "*",
+		"monolog/monolog": "1.5.*",
+		"igorw/config-service-provider": "*",
+		"symfony/config": "~2.3",
+		"cilex/console-service-provider": "dev-master",
+		"symfony/finder": "~2.0",
+		"symfony/process": "~2.0"
+	},
+	"autoload": {
+		"psr-0": {
+			"Nassau": "src/",
+			"Crane": "src/"
+		}
+	},
+	"config": {
+		"extra": {
+			"propel/propel": "2.0.0-alpha2",
+			"propel/propel-service-provider": "2.*@dev"
+		}
+	},
+	"bin": ["crane"],
+	"authors": [
+		{
+			"name": "Maciej Łebkowski",
+			"email": "m.lebkowski@gmail.com"
+		}
+	]
+}
