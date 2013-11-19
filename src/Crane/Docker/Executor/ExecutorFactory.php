@@ -14,43 +14,65 @@ class ExecutorFactory
 	 * @param bool                                              $useSudo
 	 * @param string                                            $ssh
 	 *
-	 * @return CommandExecutor|SSHExecutor|SudoExecutor
+	 * @return CommandExecutor
 	 */
 	public function createExecutor(OutputInterface $output, $useSudo = false, $ssh = null)
 	{
 		$executor = new CommandExecutor;
 		$executor->setOutput($output);
 
-		if ($ssh)
-		{
-			$user = null;
-			$port = null;
-			$host = $ssh;
-			if (strpos($host, '@') !== false)
-			{
-				list ($user, $host) = explode('@', $host);
-			}
-			list ($host, $port) = array_pad(explode(':', $host), 2, null);
-			$executor = new SSHExecutor($host, $executor);
-			if ($user)
-			{
-				$executor->setUser($user);
-				if ('vagrant' === $user)
-				{
-					$executor->setIdentityFile(getenv('HOME') . '/.vagrant.d/insecure_private_key');
-				}
-			}
-			if ($port)
-			{
-				$executor->setPort($port);
-			}
-		}
 		if ($useSudo)
 		{
-			$executor = new SudoExecutor($executor);
+			$executor->setDecorator(new SudoDecorator);
+		}
+
+		$decorator = $this->getSSHDecorator($ssh);
+		if ($decorator)
+		{
+			$executor->setDecorator($decorator);
 		}
 
 		return $executor;
+	}
+
+	/**
+	 * @param $ssh
+	 * @return SSHDecorator
+	 */
+	private function getSSHDecorator($ssh)
+	{
+		if (!$ssh)
+		{
+			return null;
+		}
+
+		$user = null;
+		$port = null;
+		$host = $ssh;
+
+		if (strpos($host, '@') !== false)
+		{
+			list ($user, $host) = explode('@', $host);
+		}
+
+		list ($host, $port) = array_pad(explode(':', $host), 2, null);
+
+		$decorator = new SSHDecorator($host);
+		if ($user)
+		{
+			$decorator->setUser($user);
+			if ('vagrant' === $user)
+			{
+				$decorator->setIdentityFile(getenv('HOME') . '/.vagrant.d/insecure_private_key');
+			}
+		}
+
+		if ($port)
+		{
+			$decorator->setPort($port);
+		}
+
+		return $decorator;
 	}
 
 }

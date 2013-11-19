@@ -2,23 +2,37 @@
 
 namespace Crane\Docker\Executor;
 
-class SSHExecutor extends CommandExecutor
+class SSHDecorator implements CommandDecoratorInterface
 {
+	/** @var CommandDecoratorInterface */
+	private $parent;
 	private $host = null;
 	private $user = null;
-	private $port = 22;
+	private $port = null;
 	private $identityFile = null;
+	private $verbose = false;
 
-	public function __construct($host, CommandExecutor $parentExecutor = null)
+	public function __construct($host)
 	{
 		$this->setHost($host);
-		$this->setParentExecutor($parentExecutor ?: new CommandExecutor);
 	}
 
-	public function executeCommand($command, $stdin = null)
+	/**
+	 * @param boolean $verbose
+	 */
+	public function setVerbose($verbose)
 	{
-		$this->getParentExecutor()->executeCommand($this->getSSHCommand($command), $stdin);
+		$this->verbose = (bool) $verbose;
 	}
+
+	/**
+	 * @return boolean
+	 */
+	public function getVerbose()
+	{
+		return $this->verbose;
+	}
+
 
 	/**
 	 * @param string $host
@@ -92,9 +106,15 @@ class SSHExecutor extends CommandExecutor
 		return $this->user;
 	}
 
-	private function getSSHCommand($command)
+	public function decorateCommand($command)
 	{
-		$sshCommand = 'ssh' ;
+		$command = $this->parent ? $this->parent->decorateCommand($command) : $command;
+		$sshCommand = 'ssh';
+
+		if ($this->getVerbose())
+		{
+			$sshCommand .= ' -v';
+		}
 		if ($this->getPort())
 		{
 			$sshCommand .= ' -p ' . $this->getPort();
@@ -114,5 +134,15 @@ class SSHExecutor extends CommandExecutor
 		}
 
 		return sprintf("%s %s %s", $sshCommand, $target, escapeshellarg($command));
+	}
+
+	/**
+	 * @param CommandDecoratorInterface $decorator
+	 * @return CommandDecoratorInterface
+	 */
+	public function setParentDecorator(CommandDecoratorInterface $decorator)
+	{
+		$this->parent = $decorator;
+		return $this;
 	}
 }

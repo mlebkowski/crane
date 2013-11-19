@@ -15,66 +15,51 @@ class CommandExecutor
 	private $output;
 
 	/**
-	 * @var CommandExecutor
-	 */
-	private $parentExecutor;
-
-	/**
 	 * @var Process
 	 */
 	private $process;
 
-	/**
-	 * @return CommandExecutor
-	 */
-	public function getRootExecutor()
+	/** @var CommandDecoratorInterface */
+	private $decorator;
+
+	public function __construct(CommandDecoratorInterface $decorator = null)
 	{
-		return $this->parentExecutor ? $this->getParentExecutor()->getRootExecutor() : $this;
+		$this->decorator = $decorator ?: new IdentityDecorator;
 	}
 
-	/**
-	 * @param \Crane\Docker\Executor\CommandExecutor $parentExecutor
-	 */
-	public function setParentExecutor(CommandExecutor $parentExecutor)
+	public function executeCommand($command, $stdIn = null)
 	{
-		$this->parentExecutor = $parentExecutor;
-	}
-
-	/**
-	 * @return \Symfony\Component\Process\Process
-	 */
-	public function getLastProcess()
-	{
-		if ($this->getRootExecutor() === $this)
-		{
-			return $this->process;
-		}
-		return $this->getRootExecutor()->getLastProcess();
-	}
-
-	/**
-	 * @return \Crane\Docker\Executor\CommandExecutor
-	 */
-	protected function getParentExecutor()
-	{
-		return $this->parentExecutor;
-	}
-
-	public function executeCommand($command, $stdin = null)
-	{
+		$command = $this->decorator->decorateCommand($command);
 		$this->process = $process = new Process($command);
-		if (null !== $stdin)
+		$process->setTimeout(null);
+		$process->setTty(true);
+		if (null !== $stdIn)
 		{
-			$process->setStdin($stdin);
+			$process->setStdin($stdIn);
 		}
 		$output = $this->getOutput();
-		//		$process->setTty(true);
 		if ($output && $output->getVerbosity() >= $output::VERBOSITY_VERBOSE)
 		{
 			$output->writeln(sprintf('$ %s', $command));
-			$process->start(function ($type, $buffer) use ($output)
+			$start = true;
+			$prefix = ' ---> ';
+			$process->start(function ($type, $buffer) use ($output, &$start, $prefix)
 			{
-				$buffer = preg_replace('/^(?=.)/m', ' --> ', $buffer);
+				if ($start)
+				{
+					$buffer = $prefix . $buffer;
+					$start = false;
+				}
+
+				if ($buffer[strlen($buffer)-1] == "\n")
+				{
+					$start = true;
+					$buffer = strtr(substr($buffer, 0, -1), ["\n" => "\n".$prefix]) . "\n";
+				}
+				else
+				{
+					$buffer = strtr($buffer, ["\n" => "\n".$prefix]);
+				}
 				$output->write($buffer);
 			});
 			$process->wait();
@@ -89,6 +74,28 @@ class CommandExecutor
 			throw new ProcessFailedException($process);
 		}
 		return $process->getOutput();
+	}
+
+	/**
+	 * @param CommandDecoratorInterface $decorator
+	 * @param bool $chain
+	 */
+	public function setDecorator(CommandDecoratorInterface $decorator, $chain = true)
+	{
+		$this->decorator = $chain ? $decorator->setParentDecorator($this->decorator) : $decorator;
+	}
+
+	/**
+	 * @return CommandDecoratorInterface
+	 */
+	public function getDecorator()
+	{
+		return $this->decorator;
+	}
+
+	public function getLastErrorOutput()
+	{
+		return $this->process ? $this->process->getErrorOutput() : null;
 	}
 
 	/**
@@ -115,14 +122,7 @@ class CommandExecutor
 	 */
 	public function setOutput(OutputInterface $output)
 	{
-		if ($this->getRootExecutor() === $this)
-		{
-			$this->output = $output;
-		}
-		else
-		{
-			$this->getRootExecutor()->setOutput($output);
-		}
+		$this->output = $output;
 		return $this;
 	}
 
