@@ -24,15 +24,23 @@ class StartContainerCommand extends AbstractBaseCommand
 	{
 		$image = $this->getImage($input);
 		$docker = $this->getDocker($input, $output);
-		$this->startImagesWithRequirements($image, $docker, $input->getOption(self::OPTION_RESTART));
+		$container = $this->startImagesWithRequirements($image, $docker, $input->getOption(self::OPTION_RESTART));
 
+		$output->writeln(sprintf('<info>http://local.znanylekarz.pl:%s/</info>', $container->getExposedPort(80)));
 	}
 
+	/**
+	 * @param Image  $image
+	 * @param Docker $docker
+	 * @param bool   $restart
+	 *
+	 * @return \Crane\Docker\DockerContainer
+	 */
 	private function startImagesWithRequirements(Image $image, Docker $docker, $restart = false)
 	{
 		if (false === $image->isRunnable())
 		{
-			return ;
+			return null;
 		}
 
 		foreach ($image->getRequiredImages() as $dep)
@@ -45,15 +53,13 @@ class StartContainerCommand extends AbstractBaseCommand
 		{
 			$container = $docker->startImage($image);
 		}
-		elseif (false === $container->isRunning() || $restart)
+		elseif (false === $container->isRunning() || $image->isMain() || $restart)
 		{
 			$docker->remove($container);
 			$container = $docker->startImage($image);
 		}
 
-		print_r([
-			$image->getName() => $container->getFirstExposedPort()
-		]);
+		return $container;
 	}
 
 }

@@ -41,6 +41,7 @@ class DockerServiceProvider implements ServiceProviderInterface
 		$app['images'] = $app->share(function () use ($app)
 		{
 			$collection = new ImageCollection;
+			$main = $app['Docker']['Main'];
 			$collection->setNamespace($app['Docker']['User']);
 			foreach ($app['Docker']['Images'] as $name => $settings)
 			{
@@ -53,6 +54,7 @@ class DockerServiceProvider implements ServiceProviderInterface
 					$settings = new ParameterBag((array) $settings);
 					/** @var Image $image */
 					$image = (new Image($name))
+						->setMain($main === $name)
 						->setPorts($settings->get('ports'))
 						->setRequiredImages($settings->get('require'))
 						->setVolumes($settings->get('volumes'))

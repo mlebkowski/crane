@@ -4,6 +4,8 @@ namespace Crane\Docker\Image;
 
 class Image
 {
+	/** @var bool */
+	private $main;
 	/** @var string */
 	protected $name;
 	/** @var array */
@@ -168,6 +170,23 @@ class Image
 		return $this->runnable;
 	}
 
+	/**
+	 * @param $main
+	 * @return $this
+	 */
+	public function setMain($main)
+	{
+		$this->main = (bool) $main;
+		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isMain()
+	{
+		return $this->main;
+	}
 
 	/**
 	 * @param \Crane\Docker\Image\ImageCollection $collection

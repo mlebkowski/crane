@@ -9,12 +9,11 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class DockerContainer
 {
-
+	/** @var string */
 	private $name;
-	/**
-	 * @var Executor\CommandExecutor
-	 */
+	/** @var Executor\CommandExecutor */
 	private $executor;
+	/** @var array|null */
 	private $inspectResults;
 
 	public function __construct($name, CommandExecutor $executor)
@@ -25,7 +24,8 @@ class DockerContainer
 
 	public function getFirstExposedPort()
 	{
-		return array_values($this->getInspectResults()["NetworkSettings"]['Ports'])[0][0]['HostPort'];
+		$ports = $this->getInspectResults()["NetworkSettings"]['Ports'];
+		return $ports ? array_values($ports)[0][0]['HostPort'] : null;
 	}
 
 	public function exists()
@@ -74,4 +74,16 @@ class DockerContainer
 	{
 		$this->inspectResults = null;
 	}
+
+	public function getExposedPort($port, $proto = 'tcp')
+	{
+		$portspec = sprintf('%d/%s', $port, $proto);
+		$ports = $this->getInspectResults()['NetworkSettings']['Ports'];
+		if (isset ($ports[$portspec]))
+		{
+			return $ports[$portspec][0]['HostPort'];
+		}
+		return null;
+	}
+
 }
