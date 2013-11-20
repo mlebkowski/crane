@@ -12,14 +12,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class BuildImagesCommand extends AbstractBaseCommand
 {
-	const ARGUMENT_NAME = 'name';
-	const OPTION_SSH = 'ssh';
+	const OPTION_REBUILD = 'rebuild';
 
 	protected function configure()
 	{
 		$this->setName('image:build')
 			->setDescription('Builds docker image and all of its requirements')
 			->addOption(self::OPTION_SSH, null, InputOption::VALUE_REQUIRED, 'Execute commands on target host')
+			->addOption(self::OPTION_REBUILD, null, InputOption::VALUE_NONE, 'Force rebuild')
 			->addArgument(self::ARGUMENT_NAME, null, 'Image name', null);
 	}
 
@@ -39,7 +39,7 @@ class BuildImagesCommand extends AbstractBaseCommand
 		}
 
 		$docker->copyDockerfiles();
-		$this->buildImageWithRequirements($image, $docker);
+		$this->buildImageWithRequirements($image, $docker, $input->getOption(self::OPTION_REBUILD));
 	}
 
 
