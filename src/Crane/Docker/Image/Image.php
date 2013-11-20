@@ -7,21 +7,34 @@ class Image
 	/** @var string */
 	protected $name;
 	/** @var array */
-	protected $ports;
+	protected $ports = [];
 	/** @var ImageCollection|array */
-	protected $requiredImages;
+	protected $requiredImages = [];
 	/** @var array */
-	protected $volumes;
+	protected $volumes = [];
+	/** @var bool */
+	protected $useTTY = false;
+	/** @var string */
+	protected $hostname;
+	/** @var bool */
+	private $runnable = true;
 
 	/** @var ImageCollection */
 	private $collection;
 
+	public function __construct($name)
+	{
+		$this->setName($name);
+	}
+
 	/**
 	 * @param string $name
+	 * @return $this
 	 */
 	public function setName($name)
 	{
 		$this->name = $name;
+		return $this;
 	}
 
 	/**
@@ -39,10 +52,12 @@ class Image
 
 	/**
 	 * @param array $ports
+	 * @return $this
 	 */
 	public function setPorts($ports)
 	{
-		$this->ports = $ports;
+		$this->ports = array_filter(array_map('intval', (array) $ports));
+		return $this;
 	}
 
 	/**
@@ -55,10 +70,12 @@ class Image
 
 	/**
 	 * @param \Crane\Docker\Image\ImageCollection|array $requiredImages
+	 * @return $this
 	 */
 	public function setRequiredImages($requiredImages)
 	{
-		$this->requiredImages = $requiredImages;
+		$this->requiredImages = (array) $requiredImages;
+		return $this;
 	}
 
 	/**
@@ -81,10 +98,12 @@ class Image
 
 	/**
 	 * @param array $volumes
+	 * @return $this
 	 */
 	public function setVolumes($volumes)
 	{
-		$this->volumes = $volumes;
+		$this->volumes = (array) $volumes;
+		return $this;
 	}
 
 	/**
@@ -96,12 +115,69 @@ class Image
 	}
 
 	/**
+	 * @param boolean $useTTY
+	 * @return $this
+	 */
+	public function setUseTTY($useTTY)
+	{
+		$this->useTTY = (bool) $useTTY;
+		return $this;
+	}
+
+	/**
+	 * @return boolean
+	 */
+	public function getUseTTY()
+	{
+		return $this->useTTY;
+	}
+
+	/**
+	 * @param string $hostname
+	 * @return $this
+	 */
+	public function setHostname($hostname)
+	{
+		$this->hostname = $hostname;
+		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getHostname()
+	{
+		return $this->hostname;
+	}
+
+	/**
+	 * @param boolean $runnable
+	 * @return $this
+	 */
+	public function setRunnable($runnable)
+	{
+		$this->runnable = (bool) $runnable;
+		return $this;
+	}
+
+	/**
+	 * @return boolean
+	 */
+	public function isRunnable()
+	{
+		return $this->runnable;
+	}
+
+
+	/**
 	 * @param \Crane\Docker\Image\ImageCollection $collection
+	 * @return $this
 	 */
 	public function setCollection($collection)
 	{
 		// set collection only once!
 		$this->collection = $this->collection ?: $collection;
+		return $this;
 	}
 
 	/**
@@ -112,6 +188,9 @@ class Image
 		return $this->collection;
 	}
 
-
+	public function getRunningName($user)
+	{
+		return sprintf('%s_%s', $user, $this->getName());
+	}
 
 }

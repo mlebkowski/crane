@@ -10,6 +10,7 @@ use Crane\Docker\Image\Image;
 use Crane\Docker\Image\ImageCollection;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
+use Symfony\Component\HttpFoundation\ParameterBag;
 
 class DockerServiceProvider implements ServiceProviderInterface
 {
@@ -43,11 +44,21 @@ class DockerServiceProvider implements ServiceProviderInterface
 			$collection->setNamespace($app['Docker']['User']);
 			foreach ($app['Docker']['Images'] as $name => $settings)
 			{
-				$image = new Image;
-				$image->setName($name);
-				$image->setPorts(isset($settings['ports']) ? (array) $settings['ports'] : []);
-				$image->setRequiredImages(isset($settings['require']) ? (array) $settings['require'] : []);
-				$image->setVolumes(isset($settings['volumes']) ? (array) $settings['volumes'] : []);
+				if (null === $settings)
+				{
+					$image = (new Image($name))->setRunnable(false);
+				}
+				else
+				{
+					$settings = new ParameterBag((array) $settings);
+					/** @var Image $image */
+					$image = (new Image($name))
+						->setPorts($settings->get('ports'))
+						->setRequiredImages($settings->get('require'))
+						->setVolumes($settings->get('volumes'))
+						->setHostname($settings->get('hostname'))
+						->setUseTTY($settings->get('useTTY'));
+				}
 				$collection->offsetSet($name, $image);
 			}
 			return $collection;

@@ -1,5 +1,6 @@
 Docker:
   User: puck
+  Main: web
   Images:
     php: ~
     search:
@@ -21,6 +22,8 @@ Docker:
       volumes:
         - mongo
     web:
+      hostname: local.znanylekarz.pl
+      useTTY: true
       require:
         - php
         - mysql
@@ -32,3 +35,4 @@ Docker:
         - 22
       volumes:
         - docplanner
+        - platform

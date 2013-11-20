@@ -9,6 +9,10 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class Docker
 {
+	/** @var DockerContainer[] */
+	private $containers;
+	/** @var System\User */
+	private $user;
 	/**
 	 * @var Executor\CommandExecutor
 	 */
@@ -89,6 +93,65 @@ class Docker
 		}
 
 	}
+	public function getDockerContainer(Image $image)
+	{
+		return $this->createDockerContainer($image);
+	}
+
+	public function startImage(Image $image)
+	{
+		$cmd = 'docker run -d -P ';
+		if ($image->getUseTTY())
+		{
+			$cmd .= '-i -t ';
+		}
+		foreach ($image->getVolumes() as $volume)
+		{
+			$path = $this->getCranePathForUser() . '/volumes/' . $volume;
+			$this->executor->executeCommand(sprintf('mkdir -p %s', escapeshellarg($path)));
+			$cmd .= sprintf('-v=%s:/home/%s:rw ', escapeshellarg($path), escapeshellarg($volume));
+		}
+
+		$kernelHost = null;
+		foreach ($image->getRequiredImages()->getArrayCopy() as $dep)
+		{
+			if (false === $dep->isRunnable())
+			{
+				continue;
+			}
+
+			$container = $this->getDockerContainer($dep);
+			if (null === $kernelHost)
+			{
+				$kernelHost = $container->getGatewayHost();
+				$cmd .= sprintf('-e KERNEL_HOST=%s ', $kernelHost);
+			}
+
+			$port = $container->getFirstExposedPort();
+			$envName = sprintf('%s_PORT', strtoupper($dep->getName()));
+			$cmd .= sprintf('-e %s=%s ', $envName, $port);
+
+		}
+
+		$cmd .= sprintf('-name=%s ', $image->getRunningName($this->getUser()->getName()));
+
+		$cmd .= $image->getFullName();
+
+
+		$this->executor->executeCommand($cmd);
+		return $this->createDockerContainer($image);
+	}
+
+
+	public function remove(DockerContainer $container)
+	{
+		if ($container->isRunning())
+		{
+			$this->executor->executeCommand(sprintf('docker stop %s', $container->getName()));
+		}
+		$this->executor->executeCommand(sprintf('docker rm %s', $container->getName()));
+		$container->reset();
+	}
 
 	/**
 	 * @return Executor\CommandExecutor
@@ -96,6 +159,39 @@ class Docker
 	private function getLocalExecutor()
 	{
 		return $this->app['executor.command'];
+	}
+
+	private function getCranePathForUser()
+	{
+		return $this->getUser()->getHome() . '/.crane';
+	}
+
+	private function getUser()
+	{
+		if (null === $this->user)
+		{
+			$command = 'echo -n; id -u $USER; echo $USER; grep $USER /etc/passwd | cut -d: -f6';
+			$rsp = $this->executor->executeCommand($command);
+			list ($id, $name, $home) = explode("\n", $rsp);
+			$this->user = new System\User($id, $name, $home);
+		}
+		return $this->user;
+	}
+
+	/**
+	 * @param Image $image
+	 *
+	 * @return DockerContainer
+	 */
+	private function createDockerContainer(Image $image)
+	{
+		$name = $image->getRunningName($this->getUser()->getName());
+		if (false === isset($this->containers[$name]))
+		{
+			$dockerContainer = new DockerContainer($name, $this->executor);
+			$this->containers[$name] = $dockerContainer;
+		}
+		return $this->containers[$name];
 	}
 
 }

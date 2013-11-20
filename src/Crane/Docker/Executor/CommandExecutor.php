@@ -27,7 +27,7 @@ class CommandExecutor
 		$this->decorator = $decorator ?: new IdentityDecorator;
 	}
 
-	public function executeCommand($command, $stdIn = null)
+	public function executeCommand($command, $stdIn = null, $quiet = false)
 	{
 		$command = $this->decorator->decorateCommand($command);
 		$this->process = $process = new Process($command);
@@ -43,7 +43,7 @@ class CommandExecutor
 			$output->writeln(sprintf('$ %s', $command));
 			$start = true;
 			$prefix = ' ---> ';
-			$process->start(function ($type, $buffer) use ($output, &$start, $prefix)
+			$process->start(function ($type, $buffer) use ($output, &$start, $prefix, $quiet)
 			{
 				if ($start)
 				{
@@ -60,7 +60,7 @@ class CommandExecutor
 				{
 					$buffer = strtr($buffer, ["\n" => "\n".$prefix]);
 				}
-				$output->write($buffer);
+				$quiet || $output->write($buffer);
 			});
 			$process->wait();
 		}

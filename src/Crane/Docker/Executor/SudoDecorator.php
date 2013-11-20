@@ -10,7 +10,7 @@ class SudoDecorator implements CommandDecoratorInterface
 	public function decorateCommand($command)
 	{
 		$command = $this->parent ? $this->parent->decorateCommand($command) : $command;
-		return 'sudo -s -- ' . $command;
+		return 'sudo -- ' . $command;
 	}
 
 	/**

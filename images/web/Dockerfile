@@ -1,11 +1,11 @@
 FROM puck/php
 MAINTAINER m.lebkowski@gmail.com
 
-RUN mkdir /root/.ssh
-ADD id_rsa /root/.ssh/
-ADD id_rsa.pub /root/.ssh/authorized_keys
-RUN chmod 700 /root/.ssh
-RUN chmod 600 /root/.ssh/id_rsa
+# RUN mkdir /root/.ssh
+# ADD id_rsa /root/.ssh/
+# ADD id_rsa.pub /root/.ssh/authorized_keys
+# RUN chmod 700 /root/.ssh
+# RUN chmod 600 /root/.ssh/id_rsa
 RUN apt-get install --force-yes -y ssh
 RUN apt-get install --force-yes -y openssh-server
 RUN sed -i"" -e 's/^.*PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
