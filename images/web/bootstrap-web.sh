@@ -20,6 +20,7 @@ chmod 0755 /var/run/sshd
 
 ( cat <<EOF
 parameters:
+    secret: $(< /dev/urandom tr -dc A-Za-z0-9 | head -c 32)
     lxc_kernel_host: ${KERNEL_HOST}
     lxc_mysql_port: ${MYSQL_PORT}
     lxc_memcached_port: ${MEMCACHED_PORT}
