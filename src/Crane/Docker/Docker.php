@@ -9,6 +9,9 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class Docker
 {
+	/** @var callable */
+	private $executorFactory;
+	private $imagesPath;
 	/** @var DockerContainer[] */
 	private $containers;
 	/** @var System\User */
@@ -24,10 +27,21 @@ class Docker
 	private $app;
 
 	private $tmpPath;
+	/**
+	 * @var PortMapper
+	 */
+	private $portMapper;
 
-	public function __construct(Application $app)
+	/**
+	 * @param string     $imagesPath
+	 * @param PortMapper $portMapper
+	 * @param callable   $executorFactory
+	 */
+	public function __construct($imagesPath, PortMapper $portMapper, $executorFactory)
 	{
-		$this->app = $app;
+		$this->imagesPath = $imagesPath;
+		$this->portMapper = $portMapper;
+		$this->executorFactory = $executorFactory;
 		$this->tmpPath = '/tmp/docker_' . substr(sha1(uniqid()), 0, 8);
 	}
 
@@ -48,7 +62,7 @@ class Docker
 	{
 		$this->executor->executeCommand(sprintf('mkdir -p %s', escapeshellarg($this->tmpPath)));
 
-		$path = $this->app['path.images'];
+		$path = $this->imagesPath;
 		$dir = basename($path);
 		$path = dirname($path);
 
@@ -112,6 +126,14 @@ class Docker
 			$cmd .= sprintf('-v=%s:/home/%s:rw ', escapeshellarg($path), escapeshellarg($volume));
 		}
 
+		foreach ($image->getPorts() as $port)
+		{
+			if ($this->portMapper->isPortMapped($port))
+			{
+				$cmd .= sprintf('-p %d:%d ', $this->portMapper->mapPort($port, $this->getUser()), $port);
+			}
+		}
+
 		$kernelHost = null;
 		foreach ($image->getRequiredImages()->getArrayCopy() as $dep)
 		{
@@ -158,7 +180,8 @@ class Docker
 	 */
 	private function getLocalExecutor()
 	{
-		return $this->app['executor.command'];
+		$factory = $this->executorFactory;
+		return $factory();
 	}
 
 	private function getCranePathForUser()

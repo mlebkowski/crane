@@ -1,6 +1,13 @@
 Docker:
   User: puck
   Main: web
+  Fixed Ports:
+   - 80
+   - 22
+   - 3306
+   - 9000
+   - ~
+   - ~
   Images:
     php: ~
     search:

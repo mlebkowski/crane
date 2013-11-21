@@ -35,7 +35,13 @@ class DockerServiceProvider implements ServiceProviderInterface
 		};
 		$app['docker'] = $app->share(function () use ($app)
 		{
-			return new Docker($app);
+			$executorFactory = function () use ($app) { return $app['executor.command']; };
+			return new Docker($app['path.images'], $app['port-mapper'], $executorFactory);
+		});
+
+		$app['port-mapper'] = $app->share(function () use ($app)
+		{
+			return new PortMapper($app['Docker']['Fixed Ports']);
 		});
 
 		$app['images'] = $app->share(function () use ($app)
