@@ -5,6 +5,7 @@ namespace Crane\Docker\Image;
 class ImageCollection extends \ArrayObject
 {
 	private $namespace;
+	private $projectName;
 
 	/**
 	 * @param mixed $index
@@ -79,5 +80,17 @@ class ImageCollection extends \ArrayObject
 		return $this->namespace;
 	}
 
+	public function setProjectName($projectName)
+	{
+		$this->projectName = $projectName;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getProjectName()
+	{
+		return $this->projectName;
+	}
 
 }

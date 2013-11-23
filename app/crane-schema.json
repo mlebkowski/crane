@@ -1,0 +1,115 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"title": "Crane Project Configuration File",
+	"type": "array",
+	"required": ["name", "user", "repository", "main-image", "images"],
+	"properties": {
+		"name": {
+			"type": "string",
+			"pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]*(/[a-zA-Z0-9_-]+)*$"
+		},
+		"user": {
+			"type": "string",
+			"pattern": "^[a-zA-Z0-9_-]+$"
+		},
+		"main-image": {
+			"type": "string"
+		},
+		"repository": {
+			"type": "array",
+			"properties": {
+				"url": {
+					"type": "string",
+					"format": "uri"
+				},
+				"target-volume": {
+					"type": "string"
+				},
+				"branch": {
+					"type": "string",
+					"default": "master"
+				}
+			},
+			"required": ["url", "target-volume"]
+		},
+		"fixed-ports": {
+			"type": "array",
+			"items": {
+				"oneOf": [
+					{
+						"type": "integer"
+					},
+					{
+						"type": "null"
+					}
+				]
+			}
+		},
+		"images": {
+			"type": "array",
+			"patternProperties": {
+				"[a-z]+": {
+					"oneOf": [
+						{
+							"type": "array",
+							"properties": {
+								"ports": {
+									"type": "array",
+									"items": {
+										"type": "integer"
+									},
+									"uniqueItems": true
+								},
+								"volumes": {
+									"type": "array",
+									"items": {
+										"type": "string",
+										"pattern": "^[a-zA-Z0-9_-]+$"
+									},
+									"uniqueItems": true
+								},
+								"require": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									},
+									"uniqueItems": true
+								},
+								"hostname": {
+									"type": "string",
+									"pattern": "^[a-zA-Z0-9_-.]+$"
+								},
+								"useTTY": {
+									"type": "boolean"
+								}
+							}
+						},
+						{
+							"type": "null"
+						}
+					]
+				}
+			},
+			"minItems": 1
+		},
+		"current-target": {
+			"oneOf": [
+				{
+					"type": "string",
+					"pattern": "^[a-z0-9-]+$"
+				},
+				{
+					"type": "null"
+				}
+			]
+		},
+		"targets": {
+			"type": "array",
+			"patternProperties": {
+				"^[a-z0-9-]+$": {
+					"type": "string"
+				}
+			}
+		}
+	}
+}

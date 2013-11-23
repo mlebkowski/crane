@@ -2,8 +2,15 @@
 
 namespace Crane\Docker\Image;
 
+use Crane\Configuration\Repository;
+use Crane\Docker\PortMapper;
+
 class Image
 {
+	/** @var Repository */
+	private $repository;
+	/** @var PortMapper */
+	private $portMapper;
 	/** @var bool */
 	private $main;
 	/** @var string */
@@ -51,14 +58,21 @@ class Image
 	{
 		return sprintf('%s/%s', $this->getCollection()->getNamespace(), $this->getName());
 	}
+	public function getProjectName()
+	{
+		return $this->getCollection()->getProjectName();
+	}
 
 	/**
-	 * @param array $ports
+	 * @param array                    $ports
+	 * @param \Crane\Docker\PortMapper $portMapper
+	 *
 	 * @return $this
 	 */
-	public function setPorts($ports)
+	public function setPorts($ports, PortMapper $portMapper = null)
 	{
 		$this->ports = array_filter(array_map('intval', (array) $ports));
+		$this->portMapper = $portMapper;
 		return $this;
 	}
 
@@ -210,6 +224,37 @@ class Image
 	public function getRunningName($user)
 	{
 		return sprintf('%s_%s', $user, $this->getName());
+	}
+
+	/**
+	 * @return PortMapper
+	 */
+	public function getPortMapper()
+	{
+		return $this->portMapper;
+	}
+
+	public function isVolumeGitRoot($volume)
+	{
+		return $this->repository->isRoot($volume);
+	}
+
+	/**
+	 * @param Repository $repository
+	 * @return $this
+	 */
+	public function setRepository(Repository $repository)
+	{
+		$this->repository = $repository;
+		return $this;
+	}
+
+	/**
+	 * @return Repository
+	 */
+	public function getRepository()
+	{
+		return $this->repository;
 	}
 
 }

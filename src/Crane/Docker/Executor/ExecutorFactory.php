@@ -23,7 +23,7 @@ class ExecutorFactory
 
 		if ($useSudo)
 		{
-			$executor->setDecorator(new SudoDecorator);
+			$executor->setDecorator(new SudoDecorator(['docker']));
 		}
 
 		$decorator = $this->getSSHDecorator($ssh);

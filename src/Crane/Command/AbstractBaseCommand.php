@@ -4,9 +4,10 @@
 namespace Crane\Command;
 
 
+use Crane\Configuration\GlobalConfiguration;
+use Crane\Configuration\Project;
 use Crane\Docker\Docker;
 use Crane\Docker\Executor\ExecutorFactory;
-use Crane\Docker\Image\ImageCollection;
 use Nassau\Silex\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -14,18 +15,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 abstract class AbstractBaseCommand extends Command
 {
 	const ARGUMENT_NAME = 'name';
-	const OPTION_SSH = 'ssh';
+	const ARGUMENT_TARGET = 'target';
 
 	/**
-	 * @param string $name
-	 * @return \Crane\Docker\Image\Image
+	 * @var Project
 	 */
-	private function getImageByName($name)
-	{
-		/** @var ImageCollection $images */
-		$images = $this->getApplication()->getService('images');
-		return $images->offsetGet($name);
-	}
+	private $project;
 
 	/**
 	 * @param InputInterface $input
@@ -34,16 +29,9 @@ abstract class AbstractBaseCommand extends Command
 	 */
 	protected function getImage(InputInterface $input)
 	{
-		$name = $input->getArgument(self::ARGUMENT_NAME) ?: $this->getApplication()->getService('Docker')['Main'];
-		$image = $this->getImageByName($name);
-
-		if (null === $image) {
-			$keys = array_keys($this->getApplication()->getService('images')->getArrayCopy());
-			throw new \RuntimeException(
-				'Doh! No such image. Please try one of the following:' . "\n - " . implode("\n - ", $keys)
-			);
-		}
-		return $image;
+		$name = $input->getArgument(self::ARGUMENT_NAME);
+		$this->project = $this->getProjectByName($name);
+		return $this->project->getMainImage();
 	}
 
 	/**
@@ -53,7 +41,17 @@ abstract class AbstractBaseCommand extends Command
 	 */
 	protected function getDocker(InputInterface $input, OutputInterface $output)
 	{
-		$ssh = $input->getOption(self::OPTION_SSH);
+		$target = $input->getArgument(self::ARGUMENT_TARGET) ?: $this->project->getCurrentTarget();
+		$targets = $this->project->getTargets();
+		if (false === $targets->offsetExists($target))
+		{
+			throw new \InvalidArgumentException(
+				'You must choose a valid target to start the containers. Valid options are:' . "\n - "
+				. implode("\n - ", array_keys($targets->getArrayCopy()))
+			);
+		}
+		$ssh = $targets->offsetGet($target);
+
 		/** @var ExecutorFactory $factory */
 		$factory = $this->getApplication()->getService('executor.factory');
 		$executor = $factory->createExecutor($output, true, $ssh);
@@ -65,4 +63,23 @@ abstract class AbstractBaseCommand extends Command
 		return $docker;
 	}
 
+	private function getProjectByName($name)
+	{
+		/** @var GlobalConfiguration $globalConfiguration */
+		$globalConfiguration = $this->getApplication()->getService('global-configuration');
+		if ($globalConfiguration->offsetExists($name))
+		{
+			return $globalConfiguration->offsetGet($name);
+		}
+
+		if (0 === $globalConfiguration->count())
+		{
+			throw new \RuntimeException('No projects defined. Add some using `project:init` command!');
+		}
+
+		$keys = array_keys($globalConfiguration->getArrayCopy());
+		throw new \RuntimeException(
+			'Doh! No such project. Please try one of the following:' . "\n - " . implode("\n - ", $keys)
+		);
+	}
 }

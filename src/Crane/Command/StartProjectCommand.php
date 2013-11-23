@@ -4,20 +4,21 @@ namespace Crane\Command;
 
 use Crane\Docker\Docker;
 use Crane\Docker\Image\Image;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class StartContainerCommand extends AbstractBaseCommand
+class StartProjectCommand extends AbstractBaseCommand
 {
 	const OPTION_RESTART = 'restart';
 
 	protected function configure()
 	{
-		return $this->setName('container:start')
-			->addOption(self::OPTION_SSH, null, InputOption::VALUE_REQUIRED, 'Execute commands on target host')
+		return $this->setName('project:start')
 			->addOption(self::OPTION_RESTART, null, InputOption::VALUE_NONE, 'Restart running instances')
-			->addArgument(self::ARGUMENT_NAME, null, 'Image name', null);
+			->addArgument(self::ARGUMENT_NAME, InputArgument::REQUIRED, 'Project name')
+			->addArgument(self::ARGUMENT_TARGET, null, 'Use this target', null);
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output)

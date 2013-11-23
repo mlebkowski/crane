@@ -11,7 +11,6 @@ class Docker
 {
 	/** @var callable */
 	private $executorFactory;
-	private $imagesPath;
 	/** @var DockerContainer[] */
 	private $containers;
 	/** @var System\User */
@@ -21,26 +20,13 @@ class Docker
 	 */
 	private $executor;
 
-	/**
-	 * @var
-	 */
-	private $app;
-
 	private $tmpPath;
-	/**
-	 * @var PortMapper
-	 */
-	private $portMapper;
 
 	/**
-	 * @param string     $imagesPath
-	 * @param PortMapper $portMapper
 	 * @param callable   $executorFactory
 	 */
-	public function __construct($imagesPath, PortMapper $portMapper, $executorFactory)
+	public function __construct($executorFactory)
 	{
-		$this->imagesPath = $imagesPath;
-		$this->portMapper = $portMapper;
 		$this->executorFactory = $executorFactory;
 		$this->tmpPath = '/tmp/docker_' . substr(sha1(uniqid()), 0, 8);
 	}
@@ -60,15 +46,16 @@ class Docker
 
 	public function copyDockerfiles()
 	{
-		$this->executor->executeCommand(sprintf('mkdir -p %s', escapeshellarg($this->tmpPath)));
-
-		$path = $this->imagesPath;
-		$dir = basename($path);
-		$path = dirname($path);
-
-		$command = sprintf('tar -cf - -C %s %s', escapeshellarg($path), escapeshellarg($dir));
-		$tarOutput = $this->getLocalExecutor()->executeCommand($command);
-		$this->executor->executeCommand(sprintf('tar -xf - -C %s', escapeshellarg($this->tmpPath)), $tarOutput);
+		throw new \RuntimeException('Not implemented');
+//		$this->executor->executeCommand(sprintf('mkdir -p %s', escapeshellarg($this->tmpPath)));
+//
+//		$path = $this->imagesPath;
+//		$dir = basename($path);
+//		$path = dirname($path);
+//
+//		$command = sprintf('tar -cf - -C %s %s', escapeshellarg($path), escapeshellarg($dir));
+//		$tarOutput = $this->getLocalExecutor()->executeCommand($command);
+//		$this->executor->executeCommand(sprintf('tar -xf - -C %s', escapeshellarg($this->tmpPath)), $tarOutput);
 	}
 
 	/**
@@ -121,16 +108,22 @@ class Docker
 		}
 		foreach ($image->getVolumes() as $volume)
 		{
-			$path = $this->getCranePathForUser() . '/volumes/' . $volume;
+			$path = sprintf('%s/%s/volumes/%s', $this->getCranePathForUser(), $image->getProjectName(), $volume);
 			$this->executor->executeCommand(sprintf('mkdir -p %s', escapeshellarg($path)));
 			$cmd .= sprintf('-v=%s:/home/%s:rw ', escapeshellarg($path), escapeshellarg($volume));
+
+			if ($image->isVolumeGitRoot($volume))
+			{
+				$this->cloneRepository($path, $image->getRepository()->getUrl());
+			}
 		}
 
+		$portMapper = $image->getPortMapper();
 		foreach ($image->getPorts() as $port)
 		{
-			if ($this->portMapper->isPortMapped($port))
+			if ($portMapper->isPortMapped($port))
 			{
-				$cmd .= sprintf('-p %d:%d ', $this->portMapper->mapPort($port, $this->getUser()), $port);
+				$cmd .= sprintf('-p %d:%d ', $portMapper->mapPort($port, $this->getUser()), $port);
 			}
 		}
 
@@ -215,6 +208,18 @@ class Docker
 			$this->containers[$name] = $dockerContainer;
 		}
 		return $this->containers[$name];
+	}
+
+	private function cloneRepository($path, $url)
+	{
+		$path = escapeshellarg($path);
+		$url = escapeshellarg($url);
+		$command = sprintf('git remote -v --git-dir=%s | grep %s | head -1', $path, $url);
+		$remote = trim($this->executor->executeCommand($command));
+		if ("" === $remote)
+		{
+			$this->executor->executeCommand(sprintf('git clone %s %s', $url, $path));
+		}
 	}
 
 }

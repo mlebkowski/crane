@@ -6,6 +6,7 @@ namespace Crane\Command;
 
 use Crane\Docker\Docker;
 use Crane\Docker\Image\Image;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -18,9 +19,9 @@ class BuildImagesCommand extends AbstractBaseCommand
 	{
 		$this->setName('image:build')
 			->setDescription('Builds docker image and all of its requirements')
-			->addOption(self::OPTION_SSH, null, InputOption::VALUE_REQUIRED, 'Execute commands on target host')
 			->addOption(self::OPTION_REBUILD, null, InputOption::VALUE_NONE, 'Force rebuild')
-			->addArgument(self::ARGUMENT_NAME, null, 'Image name', null);
+			->addArgument(self::ARGUMENT_NAME, InputArgument::REQUIRED, 'Project name')
+			->addArgument(self::ARGUMENT_TARGET, InputArgument::OPTIONAL, 'Target host');
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output)
