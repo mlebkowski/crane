@@ -11,26 +11,30 @@ use Nassau\Silex\Command;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class InitializeProjectCommand extends Command
 {
 	const ARGUMENT_REPOSITORY = 'uri';
+	const OPTION_BRANCH = 'branch';
 
 	protected function configure()
 	{
 		return $this->setName('project:init')
+			->addOption(self::OPTION_BRANCH, substr(trim(self::OPTION_BRANCH, '-'), 0, 1), InputOption::VALUE_REQUIRED, null, 'master')
 			->addArgument(self::ARGUMENT_REPOSITORY, InputArgument::REQUIRED, 'Crane project configuration GIT repository');
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		$repository = $input->getArgument(self::ARGUMENT_REPOSITORY);
+		$branch = $input->getOption(self::OPTION_BRANCH);
 		$output->writeln(sprintf("Fetching crane configuration from: <info>%s</info>", $repository));
 
 		/** @var ProjectRepository $fetcher */
 		$fetcher = $this->getApplication()->getService('project-repository');
-		$name = $fetcher->getNameFromRepository($repository);
+		$name = $fetcher->getNameFromRepository($repository, $branch);
 		if (null === $name)
 		{
 			$output->writeln('<error>Couldn’t find project at target location</error>');
@@ -50,7 +54,7 @@ class InitializeProjectCommand extends Command
 		else
 		{
 			$output->writeln('<comment>cloning</comment>');
-			$fetcher->saveProject($repository);
+			$fetcher->saveProject($repository, $branch);
 		}
 
 		$project = new Project($fetcher->getConfig($name));
