@@ -6,6 +6,7 @@ namespace Crane\Configuration;
 
 use Crane\Docker\Executor\CommandExecutor;
 use Crane\Docker\Image\Image;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class ProjectRepository implements AssetsLocatorInterface
 {
@@ -24,8 +25,29 @@ class ProjectRepository implements AssetsLocatorInterface
 
 	public function getNameFromRepository($url, $branch = null)
 	{
-		$cmd = sprintf('git archive --remote=%s %s: crane.json | tar -xO', escapeshellarg($url), $branch ?: "master");
-		$configJson = $this->executor->executeCommand($cmd);
+		$branch = $branch ? : "master";
+		$url = escapeshellarg($url);
+		try
+		{
+			$cmd = sprintf('git archive --remote=%s %s: crane.json', $url, $branch);
+			$archive = $this->executor->executeCommand($cmd);
+			$configJson = $this->executor->executeCommand('tar -xO -', $archive);
+		}
+		catch (ProcessFailedException $e)
+		{
+			$error = "Invalid command: 'git-upload-archive";
+			$stdout = $e->getProcess()->getErrorOutput();
+
+			if (substr($stdout, 0, strlen($error)) !== $error)
+			{
+				throw $e;
+			}
+			$tempnam = sys_get_temp_dir() . '/crane_clone_' . uniqid(substr(md5(time()), 0, 6));
+			$cmd = sprintf('git clone -b %s -n --depth=1 %s %s', $branch, $url, $tempnam);
+			$this->executor->executeCommand($cmd);
+			$cmd = sprintf('git show %s:crane.json', $branch);
+			$configJson = $this->executor->cwd($tempnam)->executeCommand($cmd);
+		}
 		return json_decode($configJson, true)['name'];
 	}
 
@@ -49,7 +71,7 @@ class ProjectRepository implements AssetsLocatorInterface
 
 	public function saveProject($url, $branch = null)
 	{
-		$name = $this->getNameFromRepository($url);
+		$name = $this->getNameFromRepository($url, $branch);
 		$path = escapeshellarg($this->getProjectDirectory($name));
 		$url = escapeshellarg($url);
 		$this->executor->executeCommand(sprintf('git clone -b %s %s %s', $branch?:"master", $url, $path));
