@@ -35,8 +35,10 @@ abstract class AbstractBaseCommand extends Command
 	}
 
 	/**
-	 * @param InputInterface $input
+	 * @param InputInterface  $input
 	 * @param OutputInterface $output
+	 *
+	 * @throws \InvalidArgumentException
 	 * @return Docker
 	 */
 	protected function getDocker(InputInterface $input, OutputInterface $output)
@@ -66,7 +68,7 @@ abstract class AbstractBaseCommand extends Command
 	private function getProjectByName($name)
 	{
 		/** @var GlobalConfiguration $globalConfiguration */
-		$globalConfiguration = $this->getApplication()->getService('global-configuration');
+		$globalConfiguration = $this->getApplication()->getService('configuration');
 		if ($globalConfiguration->offsetExists($name))
 		{
 			return $globalConfiguration->offsetGet($name);

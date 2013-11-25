@@ -44,7 +44,7 @@ class SetupRedirectionsCommand extends Command
 			{
 				return $line;
 			}
-			list ($ip, $host) = preg_split('/\s+/', trim($line));
+			list (, $host) = preg_split('/\s+/', trim($line));
 			if (false === in_array($host, $dpHosts))
 			{
 				return $line;

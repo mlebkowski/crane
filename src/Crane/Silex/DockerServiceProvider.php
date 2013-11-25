@@ -7,12 +7,9 @@ namespace Crane\Silex;
 use Crane\Docker\Docker;
 use Crane\Docker\Executor\CommandExecutor;
 use Crane\Docker\Executor\ExecutorFactory;
-use Crane\Docker\Image\Image;
-use Crane\Docker\Image\ImageCollection;
 use Crane\Docker\PortMapper;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
-use Symfony\Component\HttpFoundation\ParameterBag;
 
 class DockerServiceProvider implements ServiceProviderInterface
 {

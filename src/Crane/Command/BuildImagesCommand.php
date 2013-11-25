@@ -4,6 +4,7 @@
 namespace Crane\Command;
 
 
+use Crane\Configuration\ProjectRepository;
 use Crane\Docker\Docker;
 use Crane\Docker\Image\Image;
 use Symfony\Component\Console\Input\InputArgument;
@@ -39,7 +40,10 @@ class BuildImagesCommand extends AbstractBaseCommand
 			return;
 		}
 
-		$docker->copyDockerfiles();
+		/** @var ProjectRepository $fetcher */
+		$fetcher = $this->getApplication()->getService('project-repository');
+		$path = $fetcher->getProjectDirectory($image->getProjectName());
+		$docker->copyDockerfiles($path);
 		$this->buildImageWithRequirements($image, $docker, $input->getOption(self::OPTION_REBUILD));
 	}
 

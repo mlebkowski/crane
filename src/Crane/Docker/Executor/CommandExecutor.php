@@ -22,6 +22,8 @@ class CommandExecutor
 	/** @var CommandDecoratorInterface */
 	private $decorator;
 
+	private $workingDirectoriesStack = [];
+
 	public function __construct(CommandDecoratorInterface $decorator = null)
 	{
 		$this->decorator = $decorator ?: new IdentityDecorator;
@@ -30,7 +32,7 @@ class CommandExecutor
 	public function executeCommand($command, $stdIn = null, $quiet = false)
 	{
 		$command = $this->decorator->decorateCommand($command);
-		$this->process = $process = new Process($command);
+		$this->process = $process = new Process($command, array_shift($this->workingDirectoriesStack));
 		$process->setTimeout(null);
 		$process->setTty(true);
 		if (null !== $stdIn)
@@ -74,6 +76,17 @@ class CommandExecutor
 			throw new ProcessFailedException($process);
 		}
 		return $process->getOutput();
+	}
+
+	/**
+	 * @param string $directory
+	 *
+	 * @return $this
+	 */
+	public function cwd($directory)
+	{
+		$this->workingDirectoriesStack[] = $directory;
+		return $this;
 	}
 
 	/**

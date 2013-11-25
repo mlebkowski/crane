@@ -2,14 +2,12 @@
 
 namespace Crane\Silex;
 
+use Crane\Configuration\ProjectRepository;
 use Crane\Configuration\GlobalConfiguration;
-use Crane\Configuration\Resolver\FilesystemResolver;
-use Crane\Configuration\Resolver\HttpResolver;
-use Crane\Configuration\Resolver\ResolverFactory;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
-class ResolverServiceProvider implements ServiceProviderInterface
+class ConfigurationServiceProvider implements ServiceProviderInterface
 {
 
 	/**
@@ -21,16 +19,17 @@ class ResolverServiceProvider implements ServiceProviderInterface
 	 */
 	public function register(Application $app)
 	{
-		$app['global-configuration'] = $app->share(function () use ($app)
+		$app['configuration'] = $app->share(function () use ($app)
 		{
 			return new GlobalConfiguration($app['json-validator']);
 		});
-		$app['resolver.factory'] = $app->share(function () use ($app)
+		$app['project-repository'] = $app->share(function () use ($app)
 		{
-			return (new ResolverFactory)
-				->add(new FilesystemResolver)
-				->add(new HttpResolver);
+			return new ProjectRepository($app['executor.command'], $app['configuration.path']);
 		});
+
+		$app['configuration.path'] = getenv('HOME') . '/.crane';
+		$app['configuration.path.config'] = $app['configuration.path'] . '/config.json';
 	}
 
 	/**
@@ -41,9 +40,9 @@ class ResolverServiceProvider implements ServiceProviderInterface
 	 */
 	public function boot(Application $app)
 	{
-		$app['global-configuration'] = $app->share($app->extend('global-configuration', function (GlobalConfiguration $conf)
+		$app['configuration'] = $app->share($app->extend('configuration', function (GlobalConfiguration $conf) use ($app)
 		{
-			$configPath = getenv('HOME') . '/.crane/config.json';
+			$configPath = $app['configuration.path.config'];
 			if (file_exists($configPath))
 			{
 				$data = (array) json_decode(file_get_contents($configPath), true);

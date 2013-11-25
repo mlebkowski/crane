@@ -44,18 +44,12 @@ class Docker
 		}
 	}
 
-	public function copyDockerfiles()
+	public function copyDockerfiles($path)
 	{
-		throw new \RuntimeException('Not implemented');
-//		$this->executor->executeCommand(sprintf('mkdir -p %s', escapeshellarg($this->tmpPath)));
-//
-//		$path = $this->imagesPath;
-//		$dir = basename($path);
-//		$path = dirname($path);
-//
-//		$command = sprintf('tar -cf - -C %s %s', escapeshellarg($path), escapeshellarg($dir));
-//		$tarOutput = $this->getLocalExecutor()->executeCommand($command);
-//		$this->executor->executeCommand(sprintf('tar -xf - -C %s', escapeshellarg($this->tmpPath)), $tarOutput);
+		$this->executor->executeCommand(sprintf('mkdir -p %s', escapeshellarg($this->tmpPath)));
+
+		$tarOutput = $this->getLocalExecutor()->cwd($path)->executeCommand('tar -cf - .');
+		$this->executor->executeCommand(sprintf('tar -xf - -C %s', escapeshellarg($this->tmpPath)), $tarOutput);
 	}
 
 	/**
@@ -212,12 +206,12 @@ class Docker
 
 	private function cloneRepository($path, $url)
 	{
-		$path = escapeshellarg($path);
-		$url = escapeshellarg($url);
-		$command = sprintf('git remote -v --git-dir=%s | grep %s | head -1', $path, $url);
-		$remote = trim($this->executor->executeCommand($command));
-		if ("" === $remote)
+		$command = 'git config --get remote.origin.url | head -1';
+		$remote = trim($this->executor->cwd($path)->executeCommand($command));
+		if ($url !== $remote)
 		{
+			$path = escapeshellarg($path);
+			$url = escapeshellarg($url);
 			$this->executor->executeCommand(sprintf('git clone %s %s', $url, $path));
 		}
 	}

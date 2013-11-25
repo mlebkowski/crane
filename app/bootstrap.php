@@ -28,21 +28,11 @@ $silex->register(new \Nassau\Silex\Provider\CommandsProvider, [
 ]);
 
 $silex->register(new \Crane\Silex\DockerServiceProvider);
-$silex->register(new \Crane\Silex\DaemonProvider);
 $silex->register(new \Crane\Silex\JsonValidatorProvider);
-$silex->register(new \Crane\Silex\ResolverServiceProvider);
+$silex->register(new \Crane\Silex\ConfigurationServiceProvider);
 
 // since starting a console does not boot Silex
 $silex->boot();
 /** @var ContainerAwareApplication $console */
 $console = $silex->offsetGet('console');
-
-if (php_sapi_name() === 'cli-server')
-{
-	$input = new \Symfony\Component\Console\Input\StringInput('daemon');
-	$console->run($input);
-}
-else
-{
-	$console->run();
-}
+$console->run();
