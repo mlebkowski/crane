@@ -8,13 +8,16 @@
 		"symfony/config": "~2.3",
 		"cilex/console-service-provider": "dev-master",
 		"symfony/finder": "~2.0",
-		"symfony/process": "~2.0",
 		"justinrainbow/json-schema": "~1.3"
+	},
+	"replace": {
+		"symfony/process": "2.*"
 	},
 	"autoload": {
 		"psr-0": {
 			"Nassau": "src/",
-			"Crane": "src/"
+			"Crane": "src/",
+			"Symfony\\Component\\Process": "src/"
 		}
 	},
 	"config": {

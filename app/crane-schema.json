@@ -37,7 +37,8 @@
 			"items": {
 				"oneOf": [
 					{
-						"type": "integer"
+						"type": "string",
+						"format": "[a-z]+/\\d+"
 					},
 					{
 						"type": "null"

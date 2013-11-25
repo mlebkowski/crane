@@ -17,6 +17,8 @@ class Project implements \JsonSerializable
 	 * @var array
 	 */
 	private $data;
+	/** @var ImageCollection */
+	private $collection;
 
 	public function __construct(array $data)
 	{
@@ -57,9 +59,14 @@ class Project implements \JsonSerializable
 	 */
 	public function getImages()
 	{
-		$collection = new ImageCollection;
+		if ($this->collection)
+		{
+			return $this->collection;
+		}
+
+		$this->collection = $collection = new ImageCollection;
 		$main = $this->data['main-image'];
-		$repository = new Repository($this->data['repository']['target-volume'], $this->data['repository']['url']);
+		$repository = $this->getRepository();
 		$collection->setNamespace($this->getUser());
 		$collection->setProjectName($this->getName());
 		foreach ($this->data['images'] as $name => $settings)
@@ -79,6 +86,7 @@ class Project implements \JsonSerializable
 						 ->setVolumes($settings->get('volumes'))
 						 ->setHostname($settings->get('hostname'))
 						 ->setRepository($repository)
+						 ->setIdentity($settings->get('identity'))
 						 ->setUseTTY($settings->get('useTTY'));
 			}
 			$collection->offsetSet($name, $image);
@@ -111,5 +119,17 @@ class Project implements \JsonSerializable
 	public function getUser()
 	{
 		return $this->data['user'];
+	}
+
+	/**
+	 * @return Repository
+	 */
+	public function getRepository()
+	{
+		return new Repository(
+			$this->data['repository']['target-volume'],
+			$this->data['repository']['url'],
+			isset($this->data['repository']['branch']) ? $this->data['repository']['branch'] : Repository::BRANCH_MASTER
+		);
 	}
 }

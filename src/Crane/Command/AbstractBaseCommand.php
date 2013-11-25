@@ -43,7 +43,14 @@ abstract class AbstractBaseCommand extends Command
 	 */
 	protected function getDocker(InputInterface $input, OutputInterface $output)
 	{
-		$target = $input->getArgument(self::ARGUMENT_TARGET) ?: $this->project->getCurrentTarget();
+		if ($this->getDefinition()->hasArgument(self::ARGUMENT_TARGET))
+		{
+			$target = $input->getArgument(self::ARGUMENT_TARGET) ?: $this->project->getCurrentTarget();
+		}
+		else
+		{
+			$target = $this->project->getCurrentTarget();
+		}
 		$targets = $this->project->getTargets();
 		if (false === $targets->offsetExists($target))
 		{

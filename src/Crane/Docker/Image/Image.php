@@ -25,6 +25,8 @@ class Image
 	protected $useTTY = false;
 	/** @var string */
 	protected $hostname;
+	/** @var string */
+	protected $identity;
 	/** @var bool */
 	private $runnable = true;
 
@@ -255,6 +257,24 @@ class Image
 	public function getRepository()
 	{
 		return $this->repository;
+	}
+
+	/**
+	 * @param string $identity
+	 * @return $this
+	 */
+	public function setIdentity($identity)
+	{
+		$this->identity = $identity;
+		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getIdentity()
+	{
+		return $this->identity;
 	}
 
 }

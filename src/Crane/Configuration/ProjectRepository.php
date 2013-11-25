@@ -5,8 +5,9 @@ namespace Crane\Configuration;
 
 
 use Crane\Docker\Executor\CommandExecutor;
+use Crane\Docker\Image\Image;
 
-class ProjectRepository
+class ProjectRepository implements AssetsLocatorInterface
 {
 	/** @var string */
 	private $configPath;
@@ -21,9 +22,9 @@ class ProjectRepository
 		$this->executor = $executor;
 	}
 
-	public function getNameFromRepository($url)
+	public function getNameFromRepository($url, $branch = null)
 	{
-		$cmd = sprintf('git archive --remote=%s HEAD: crane.json | tar -xO', escapeshellarg($url));
+		$cmd = sprintf('git archive --remote=%s %s: crane.json | tar -xO', escapeshellarg($url), $branch ?: "master");
 		$configJson = $this->executor->executeCommand($cmd);
 		return json_decode($configJson, true)['name'];
 	}
@@ -46,12 +47,12 @@ class ProjectRepository
 		$this->executor->cwd($path)->executeCommand('git pull --rebase');
 	}
 
-	public function saveProject($url)
+	public function saveProject($url, $branch = null)
 	{
 		$name = $this->getNameFromRepository($url);
 		$path = escapeshellarg($this->getProjectDirectory($name));
 		$url = escapeshellarg($url);
-		$this->executor->executeCommand(sprintf('git clone %s %s', $url, $path));
+		$this->executor->executeCommand(sprintf('git clone -b %s %s %s', $branch?:"master", $url, $path));
 	}
 
 	/**
@@ -71,5 +72,20 @@ class ProjectRepository
 			return json_decode(file_get_contents($this->getProjectDirectory($name) . '/crane.json'), true);
 		}
 		throw new \InvalidArgumentException('Cannot find project by that name: ' . $name);
+	}
+
+	/**
+	 * @param Image  $image
+	 * @param string $name
+	 *
+	 * @return string
+	 */
+	public function getAssetPath(Image $image, $name)
+	{
+		return vsprintf('%s/images/%s/%s', [
+			$this->getProjectDirectory($image->getProjectName()),
+			$image->getName(),
+			$name
+		]);
 	}
 }

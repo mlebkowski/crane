@@ -2,6 +2,7 @@
 
 namespace Crane\Command;
 
+use Crane\Configuration\AssetsLocatorInterface;
 use Crane\Docker\Docker;
 use Crane\Docker\Image\Image;
 use Symfony\Component\Console\Input\InputArgument;
@@ -13,6 +14,9 @@ class StartProjectCommand extends AbstractBaseCommand
 {
 	const OPTION_RESTART = 'restart';
 
+	/** @var AssetsLocatorInterface */
+	private $locator;
+
 	protected function configure()
 	{
 		return $this->setName('project:start')
@@ -23,6 +27,8 @@ class StartProjectCommand extends AbstractBaseCommand
 
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
+		$this->locator = $this->getApplication()->getService('project-repository');
+
 		$image = $this->getImage($input);
 		$docker = $this->getDocker($input, $output);
 		$container = $this->startImagesWithRequirements($image, $docker, $input->getOption(self::OPTION_RESTART));
@@ -52,12 +58,12 @@ class StartProjectCommand extends AbstractBaseCommand
 		$container = $docker->getDockerContainer($image);
 		if (false === $container->exists())
 		{
-			$container = $docker->startImage($image);
+			$container = $docker->startImage($image, $this->locator);
 		}
 		elseif (false === $container->isRunning() || $image->isMain() || $restart)
 		{
 			$docker->remove($container);
-			$container = $docker->startImage($image);
+			$container = $docker->startImage($image, $this->locator);
 		}
 
 		return $container;

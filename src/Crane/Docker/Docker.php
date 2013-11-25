@@ -3,9 +3,12 @@
 
 namespace Crane\Docker;
 
+use Crane\Configuration\AssetsLocatorInterface;
+use Crane\Configuration\Repository;
 use Crane\Docker\Image\Image;
 use Silex\Application;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\TTY;
 
 class Docker
 {
@@ -93,7 +96,7 @@ class Docker
 		return $this->createDockerContainer($image);
 	}
 
-	public function startImage(Image $image)
+	public function startImage(Image $image, AssetsLocatorInterface $assetsLocator)
 	{
 		$cmd = 'docker run -d -P ';
 		if ($image->getUseTTY())
@@ -108,17 +111,27 @@ class Docker
 
 			if ($image->isVolumeGitRoot($volume))
 			{
-				$this->cloneRepository($path, $image->getRepository()->getUrl());
+				$this->cloneRepository($path, $image->getRepository());
 			}
 		}
 
 		$portMapper = $image->getPortMapper();
 		foreach ($image->getPorts() as $port)
 		{
-			if ($portMapper->isPortMapped($port))
+			$portSpec = sprintf('%s/%d', $image->getName(), $port);
+			if ($portMapper->isPortMapped($portSpec))
 			{
-				$cmd .= sprintf('-p %d:%d ', $portMapper->mapPort($port, $this->getUser()), $port);
+				$cmd .= sprintf('-p %d:%d ', $portMapper->mapPort($portSpec, $this->getUser()), $port);
 			}
+		}
+
+		if ($image->getIdentity())
+		{
+			$privateKey = file_get_contents($assetsLocator->getAssetPath($image, $image->getIdentity()));
+			$path = $this->getIdentityPath($image);
+			$this->executor->executeCommand(sprintf('mkdir -p %s', escapeshellarg(dirname($path))));
+			$this->executor->executeCommand(sprintf('cat > %s', escapeshellarg($path)), $privateKey);
+			$this->executor->executeCommand(sprintf('chmod 0600 %s', escapeshellarg($path)), $privateKey);
 		}
 
 		$kernelHost = null;
@@ -204,16 +217,50 @@ class Docker
 		return $this->containers[$name];
 	}
 
-	private function cloneRepository($path, $url)
+	private function cloneRepository($path, Repository $repository)
 	{
-		$command = 'git config --get remote.origin.url | head -1';
-		$remote = trim($this->executor->cwd($path)->executeCommand($command));
-		if ($url !== $remote)
+		$command = sprintf('git --git-dir=%s/.git config --get remote.origin.url | head -1', escapeshellarg($path));
+		$remote = trim($this->executor->executeCommand($command));
+		if ($repository->getUrl() !== $remote)
 		{
+			$ignoreKeys = "Host *\n   StrictHostKeyChecking no\n   UserKnownHostsFile=/dev/null\n\n";
+			$this->executor->executeCommand('cat >> ~/.ssh/config', $ignoreKeys);
+
 			$path = escapeshellarg($path);
-			$url = escapeshellarg($url);
-			$this->executor->executeCommand(sprintf('git clone %s %s', $url, $path));
+			$url = escapeshellarg($repository->getUrl());
+			$this->executor->executeCommand(sprintf('git clone -b %s %s %s', $repository->getBranch(), $url, $path));
 		}
+	}
+
+	/**
+	 * @param Image $image
+	 *
+	 * @return string
+	 */
+	private function getIdentityPath(Image $image)
+	{
+		return vsprintf('%s/%s/identities/%s_rsa', [
+			$this->getCranePathForUser(),
+			$image->getProjectName(),
+			$image->getName()
+		]);
+	}
+
+	public function runInteractive(Image $image, $command = '')
+	{
+		if (false === in_array(22, $image->getPorts()))
+		{
+			throw new \InvalidArgumentException(sprintf('Image %s does not have port 22 open', $image->getName()));
+		}
+
+		$containter = $this->getDockerContainer($image);
+		$port = $containter->getExposedPort(22);
+		$host = $containter->getGatewayHost();
+		// TODO: this can be done by local executor, not via double ssh!
+		// TODO: it would remove AssetsLocatorInterface requirement for building
+		$command = sprintf('ssh -t -p %d -i %s root@%s %s', $port, $this->getIdentityPath($image), $host, $command);
+
+		$this->executor->executeCommand($command, new TTY);
 	}
 
 }

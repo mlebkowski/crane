@@ -16,19 +16,19 @@ class PortMapper
 		$this->ports = array_values($ports);
 	}
 
-	public function isPortMapped($port)
+	public function isPortMapped($portSpec)
 	{
-		return in_array($port, $this->ports);
+		return in_array($portSpec, $this->ports);
 	}
 
-	public function mapPort($port, System\User $user)
+	public function mapPort($portSpec, System\User $user)
 	{
-		if (false === $this->isPortMapped($port))
+		if (false === $this->isPortMapped($portSpec))
 		{
 			return null;
 		}
 
-		$idx = array_search($port, $this->ports);
+		$idx = array_search($portSpec, $this->ports);
 		$slotSize = sizeof($this->ports);
 		$slotsCount = floor((self::FIXED_RANGE_END - self::FIXED_RANGE_START) / $slotSize);
 		$slot = $user->getId() % $slotsCount;

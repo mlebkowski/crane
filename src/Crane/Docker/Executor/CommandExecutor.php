@@ -6,6 +6,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Process\TTY;
 
 class CommandExecutor
 {
@@ -34,10 +35,16 @@ class CommandExecutor
 		$command = $this->decorator->decorateCommand($command);
 		$this->process = $process = new Process($command, array_shift($this->workingDirectoriesStack));
 		$process->setTimeout(null);
-		$process->setTty(true);
 		if (null !== $stdIn)
 		{
-			$process->setStdin($stdIn);
+			if ($stdIn instanceof TTY)
+			{
+				$process->setTty(true);
+			}
+			else
+			{
+				$process->setStdin($stdIn);
+			}
 		}
 		$output = $this->getOutput();
 		if ($output && $output->getVerbosity() >= $output::VERBOSITY_VERBOSE)
