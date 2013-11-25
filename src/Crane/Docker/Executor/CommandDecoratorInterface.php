@@ -8,7 +8,7 @@ interface CommandDecoratorInterface
 	 * @param string $command
 	 * @return string
 	 */
-	public function decorateCommand($command);
+	public function decorateCommand($command, CommandExecutor $executor);
 
 	/**
 	 * @param CommandDecoratorInterface $decorator

@@ -258,7 +258,7 @@ class Docker
 		$host = $containter->getGatewayHost();
 		// TODO: this can be done by local executor, not via double ssh!
 		// TODO: it would remove AssetsLocatorInterface requirement for building
-		$command = sprintf('ssh -t -p %d -i %s root@%s %s', $port, $this->getIdentityPath($image), $host, $command);
+		$command = sprintf('ssh -t -p %d -i %s root@%s %s', $port, $this->getIdentityPath($image), $host, escapeshellarg($command));
 
 		$this->executor->executeCommand($command, new TTY);
 	}

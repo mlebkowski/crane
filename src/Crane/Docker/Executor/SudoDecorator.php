@@ -17,9 +17,9 @@ class SudoDecorator implements CommandDecoratorInterface
 	/** @var CommandDecoratorInterface */
 	private $parent;
 
-	public function decorateCommand($command)
+	public function decorateCommand($command, CommandExecutor $executor)
 	{
-		$command = $this->parent ? $this->parent->decorateCommand($command) : $command;
+		$command = $this->parent ? $this->parent->decorateCommand($command, $executor) : $command;
 		if ($this->onlyForCommands)
 		{
 			list ($arg) = explode(' ', $command);

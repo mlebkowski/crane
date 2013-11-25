@@ -106,10 +106,15 @@ class SSHDecorator implements CommandDecoratorInterface
 		return $this->user;
 	}
 
-	public function decorateCommand($command)
+	public function decorateCommand($command, CommandExecutor $executor)
 	{
-		$command = $this->parent ? $this->parent->decorateCommand($command) : $command;
-		$sshCommand = 'ssh -tA';
+		$command = $this->parent ? $this->parent->decorateCommand($command, $executor) : $command;
+		$sshCommand = 'ssh -A';
+
+		if ($executor->getTty())
+		{
+			$sshCommand .= ' -t';
+		}
 
 		if ($this->getVerbose())
 		{

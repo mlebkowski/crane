@@ -8,7 +8,7 @@ class NullDecorator implements CommandDecoratorInterface
 	 * @param string $command
 	 * @return string
 	 */
-	public function decorateCommand($command)
+	public function decorateCommand($command, CommandExecutor $executor)
 	{
 		return "";
 	}

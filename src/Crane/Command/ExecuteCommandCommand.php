@@ -16,7 +16,7 @@ class ExecuteCommandCommand extends AbstractBaseCommand
 	{
 		return $this->setName('project:command')
 			->addArgument(self::ARGUMENT_NAME, InputArgument::REQUIRED, 'Project name. It must be running')
-			->addArgument(self::ARGUMENT_COMMANDLINE, InputArgument::IS_ARRAY | InputArgument::OPTIONAL, null, ['bash']);
+			->addArgument(self::ARGUMENT_COMMANDLINE, InputArgument::OPTIONAL, null);
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output)
@@ -24,7 +24,7 @@ class ExecuteCommandCommand extends AbstractBaseCommand
 		$image = $this->getImage($input);
 		$docker = $this->getDocker($input, $output);
 
-		$docker->runInteractive($image);
+		$docker->runInteractive($image, $input->getArgument(self::ARGUMENT_COMMANDLINE));
 	}
 
 }

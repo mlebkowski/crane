@@ -25,6 +25,8 @@ class CommandExecutor
 
 	private $workingDirectoriesStack = [];
 
+	private $tty;
+
 	public function __construct(CommandDecoratorInterface $decorator = null)
 	{
 		$this->decorator = $decorator ?: new IdentityDecorator;
@@ -32,12 +34,14 @@ class CommandExecutor
 
 	public function executeCommand($command, $stdIn = null, $quiet = false)
 	{
-		$command = $this->decorator->decorateCommand($command);
+		$this->tty = $stdIn instanceof TTY;
+
+		$command = $this->decorator->decorateCommand($command, $this);
 		$this->process = $process = new Process($command, array_shift($this->workingDirectoriesStack));
 		$process->setTimeout(null);
 		if (null !== $stdIn)
 		{
-			if ($stdIn instanceof TTY)
+			if ($this->tty)
 			{
 				$process->setTty(true);
 			}
@@ -152,6 +156,14 @@ class CommandExecutor
 	public function getOutput()
 	{
 		return $this->output;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getTty()
+	{
+		return $this->tty;
 	}
 
 }
