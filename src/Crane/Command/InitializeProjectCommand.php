@@ -63,6 +63,14 @@ class InitializeProjectCommand extends Command
 		$globalConfiguration = $this->getApplication()->getService('configuration');
 		try
 		{
+			if ($this->hasCustomConfigurationForProject($globalConfiguration, $project))
+			{
+				$ask = 'You have local changes in your project. Overwrite? [Y/n]';
+				if (false === $this->getDialogHelper()->ask($output, $ask))
+				{
+					return 1;
+				};
+			}
 			$project = $globalConfiguration->append($project);
 			$output->writeln(sprintf('Added project configuration', $project->getName()));
 		}
@@ -117,6 +125,18 @@ class InitializeProjectCommand extends Command
 		{
 			$project->setCurrentTarget($value);
 		}
+	}
+
+	private function hasCustomConfigurationForProject(GlobalConfiguration $globalConfiguration, Project $project)
+	{
+		$currentConfig = $globalConfiguration->offsetGet($project->getName());
+		if (null === $currentConfig)
+		{
+			return false;
+		}
+		$jsonData = $currentConfig->jsonSerialize();
+		unset($jsonData['current-target']);
+		return $jsonData !== $project->jsonSerialize();
 	}
 
 }

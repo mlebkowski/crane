@@ -45,9 +45,14 @@ class Project implements \JsonSerializable
 	{
 		$this->data['current-target'] = $target;
 	}
-	public function getCurrentTarget()
+	public function getCurrentTarget($value = false)
 	{
-		return isset($this->data['current-target']) ? $this->data['current-target'] : null;
+		$name = isset($this->data['current-target']) ? $this->data['current-target'] : null;
+		if ($name && $value)
+		{
+			return $this->getTargets()->offsetGet($name);
+		}
+		return $name;
 	}
 	public function hasCurrentTarget()
 	{

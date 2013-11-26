@@ -91,4 +91,14 @@ abstract class AbstractBaseCommand extends Command
 			'Doh! No such project. Please try one of the following:' . "\n - " . implode("\n - ", $keys)
 		);
 	}
+
+	/**
+	 * @return \Crane\Configuration\Project
+	 */
+	protected function getProject()
+	{
+		return $this->project;
+	}
+
+
 }
