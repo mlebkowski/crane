@@ -65,7 +65,7 @@ class InitializeProjectCommand extends Command
 		{
 			if ($this->hasCustomConfigurationForProject($globalConfiguration, $project))
 			{
-				$ask = 'You have local changes in your project. Overwrite? [Y/n]';
+				$ask = 'You have local changes in your project. Overwrite? [Y/n] ';
 				if (false === $this->getDialogHelper()->ask($output, $ask))
 				{
 					return 1;
@@ -101,7 +101,7 @@ class InitializeProjectCommand extends Command
 			$startInput = new ArrayInput([
 				StartProjectCommand::ARGUMENT_NAME => $project->getName(),
 				StartProjectCommand::ARGUMENT_TARGET => $project->getCurrentTarget(),
-				StartProjectCommand::OPTION_RESTART => true
+				'--' . StartProjectCommand::OPTION_RESTART => true
 			]);
 			return $command->run($startInput, $output);
 		}
