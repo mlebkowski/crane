@@ -35,7 +35,7 @@ class DockerServiceProvider implements ServiceProviderInterface
 		$app['docker'] = $app->share(function () use ($app)
 		{
 			$executorFactory = function () use ($app) { return $app['executor.command']; };
-			return new Docker($executorFactory);
+			return new Docker($executorFactory, $app['path.resources'] . '/post-receive');
 		});
 
 	}

@@ -7,10 +7,11 @@ use Cilex\Provider\Console\ContainerAwareApplication;
 use Symfony\Component\Finder\Finder;
 
 $silex = new Silex\Application([
-	'path.app'    => __DIR__,
-	'path.config' => __DIR__ . '/config',
-	'path.src'    => realpath(__DIR__ . '/../src'),
-	'path.images' => realpath(__DIR__ . '/../images'),
+	'path.app'       => __DIR__,
+	'path.config'    => __DIR__ . '/config',
+	'path.resources' => __DIR__ . '/resources',
+	'path.src'       => realpath(__DIR__ . '/../src'),
+	'path.images'    => realpath(__DIR__ . '/../images'),
 ]);
 
 foreach(Finder::create()->in($silex['path.config'])->name('*.yaml') as $file)

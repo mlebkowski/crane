@@ -12,6 +12,8 @@ use Symfony\Component\Process\TTY;
 
 class Docker
 {
+	/** @var string */
+	private $postReceivePath;
 	/** @var callable */
 	private $executorFactory;
 	/** @var DockerContainer[] */
@@ -26,11 +28,13 @@ class Docker
 	private $tmpPath;
 
 	/**
-	 * @param callable   $executorFactory
+	 * @param callable $executorFactory
+	 * @param string   $postReceivePath
 	 */
-	public function __construct($executorFactory)
+	public function __construct($executorFactory, $postReceivePath)
 	{
 		$this->executorFactory = $executorFactory;
+		$this->postReceivePath = $postReceivePath;
 		$this->tmpPath = '/tmp/docker_' . substr(sha1(uniqid()), 0, 8);
 	}
 
@@ -105,7 +109,7 @@ class Docker
 		}
 		foreach ($image->getVolumes() as $volume)
 		{
-			$path = sprintf('%s/%s/volumes/%s', $this->getCranePathForUser(), $image->getProjectName(), $volume);
+			$path = $this->getVolumePathOnTarget($image, $volume);
 			$this->executor->executeCommand(sprintf('mkdir -p %s', escapeshellarg($path)));
 			$cmd .= sprintf('-v=%s:/home/%s:rw ', escapeshellarg($path), escapeshellarg($volume));
 
@@ -161,6 +165,17 @@ class Docker
 
 
 		$this->executor->executeCommand($cmd);
+
+
+		// add post-receive hook after image has started:
+		foreach ($image->getVolumes() as $volume)
+		{
+			if ($image->isVolumeGitRoot($volume))
+			{
+				$this->setupPostRevceiveHook($image, $volume);
+			}
+		}
+
 		return $this->createDockerContainer($image);
 	}
 
@@ -253,14 +268,51 @@ class Docker
 			throw new \InvalidArgumentException(sprintf('Image %s does not have port 22 open', $image->getName()));
 		}
 
-		$containter = $this->getDockerContainer($image);
-		$port = $containter->getExposedPort(22);
-		$host = $containter->getGatewayHost();
-		// TODO: this can be done by local executor, not via double ssh!
-		// TODO: it would remove AssetsLocatorInterface requirement for building
-		$command = sprintf('ssh -A -t -p %d -i %s root@%s %s', $port, $this->getIdentityPath($image), $host, escapeshellarg($command));
+		$command = $this->getSshCommand($command, $image);
 
 		$this->executor->executeCommand($command, new TTY);
 	}
 
+	private function getSshCommand($command, Image $image)
+	{
+		$containter = $this->getDockerContainer($image);
+		$port = $containter->getExposedPort(22);
+		$host = $containter->getGatewayHost();
+
+		// TODO: this can be done by local executor, not via double ssh!
+		// TODO: it would remove AssetsLocatorInterface requirement for building
+		return sprintf('ssh -A -t -p %d -i %s root@%s %s', $port, $this->getIdentityPath($image), $host, escapeshellarg($command));
+
+	}
+
+	private function getPostReceiveScript(Image $image, $volume)
+	{
+		return strtr(file_get_contents($this->postReceivePath), [
+			'##COMMAND##' => $this->getSshCommand('php', $image),
+			'##TARGET_VOLUME##' => '/home/' . $volume,
+		]);
+	}
+
+	private function setupPostRevceiveHook($image, $volume)
+	{
+
+		$gitDir = sprintf('%s/.git', $this->getVolumePathOnTarget($image, $volume));
+		$path = sprintf('%s/hooks/post-receive', $gitDir);
+		$script = $this->getPostReceiveScript($image, $volume);
+		$this->executor->executeCommand(sprintf('cat > %s', escapeshellarg($path)), $script);
+		$this->executor->executeCommand(sprintf('chmod a+x %s', escapeshellarg($path)));
+		$this->executor->executeCommand(sprintf('git --git-dir=%s config --replace-all receive.denyCurrentBranch ignore', $gitDir));
+		$this->executor->executeCommand(sprintf('git --git-dir=%s config --replace-all receive.denyDeleteCurrent ignore', $gitDir));
+	}
+
+	/**
+	 * @param Image  $image
+	 * @param string $volume
+	 *
+	 * @return string
+	 */
+	private function getVolumePathOnTarget(Image $image, $volume)
+	{
+		return sprintf('%s/%s/volumes/%s', $this->getCranePathForUser(), $image->getProjectName(), $volume);
+	}
 }

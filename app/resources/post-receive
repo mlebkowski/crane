@@ -1,0 +1,26 @@
+#!/bin/bash
+
+set -e -u
+
+## those values should be updated by crane:
+COMMAND="##COMMAND##"
+TARGET_VOLUME="##TARGET_VOLUME##"
+
+if [ "." == "$GIT_DIR" ]; then
+    GIT_DIR=".git"
+    cd ..
+fi
+
+# we are only interested in the first pushed ref
+read old sha ref
+
+[ -n "${sha//0/}" ] || exit;
+
+git reset --hard $sha
+
+# composer
+[ -f "composer.phar" ] || exit;
+
+if [ "" == "${old//0/}" ] || git diff --name-only $old $sha | grep -E 'composer.(json|lock)' ; then
+    $COMMAND $TARGET_VOLUME/composer.phar install --working-dir=$TARGET_VOLUME --dev --no-scripts --no-interaction --no-ansi
+fi
