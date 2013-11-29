@@ -7,6 +7,9 @@ use Crane\Docker\PortMapper;
 
 class Image
 {
+	const DEFAULT_REMOTE_USER = 'root';
+	/** @var string */
+	private $remoteUser = self::DEFAULT_REMOTE_USER;
 	/** @var Repository */
 	private $repository;
 	/** @var PortMapper */
@@ -275,6 +278,25 @@ class Image
 	public function getIdentity()
 	{
 		return $this->identity;
+	}
+
+	/**
+	 * @param string $user
+	 *
+	 * @return $this
+	 */
+	public function setRemoteUser($user)
+	{
+		$this->remoteUser = $user;
+		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getRemoteUser()
+	{
+		return $this->remoteUser;
 	}
 
 }

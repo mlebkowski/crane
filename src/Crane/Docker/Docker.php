@@ -281,7 +281,7 @@ class Docker
 
 		// TODO: this can be done by local executor, not via double ssh!
 		// TODO: it would remove AssetsLocatorInterface requirement for building
-		return sprintf('ssh -A -t -p %d -i %s root@%s %s', $port, $this->getIdentityPath($image), $host, escapeshellarg($command));
+		return sprintf('ssh -A -t -p %d -i %s %s@%s %s', $port, $this->getIdentityPath($image), $image->getRemoteUser(), $host, escapeshellarg($command));
 
 	}
 

@@ -82,6 +82,9 @@
 								},
 								"useTTY": {
 									"type": "boolean"
+								},
+								"remoteUser": {
+									"type": "string"
 								}
 							}
 						},

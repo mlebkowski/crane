@@ -92,7 +92,8 @@ class Project implements \JsonSerializable
 						 ->setHostname($settings->get('hostname'))
 						 ->setRepository($repository)
 						 ->setIdentity($settings->get('identity'))
-						 ->setUseTTY($settings->get('useTTY'));
+						 ->setUseTTY($settings->get('useTTY'))
+						 ->setRemoteUser($settings->get('remoteUser', Image::DEFAULT_REMOTE_USER));
 			}
 			$collection->offsetSet($name, $image);
 		}
