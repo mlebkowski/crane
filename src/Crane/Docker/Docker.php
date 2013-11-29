@@ -186,6 +186,10 @@ class Docker
 		{
 			$this->executor->executeCommand(sprintf('docker stop %s', $container->getName()));
 		}
+		elseif ($container->isGhost())
+		{
+			$this->executor->executeCommand(sprintf('docker stop -t=0 %s', $container->getName()));
+		}
 		$this->executor->executeCommand(sprintf('docker rm %s', $container->getName()));
 		$container->reset();
 	}

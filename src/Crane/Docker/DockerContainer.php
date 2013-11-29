@@ -86,4 +86,9 @@ class DockerContainer
 		return null;
 	}
 
+	public function isGhost()
+	{
+		return $this->getInspectResults()['State']['Ghost'];
+	}
+
 }
