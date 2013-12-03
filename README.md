@@ -56,3 +56,10 @@ Permissions
 -----------
 
 Make sure you have agent forwarding setup for target host. All SSH commands are using the ```-A``` flag.
+
+Editing files
+-------------
+
+You may want to edit the application source files. To do this push to any branch at ```ssh://current-target/.crane/vendor-name/project-name/volumes/main-image-name```. There is a ```post-receive``` hook there that resets the working copy to the pushed commit.
+
+You might as well use ```sshfs```, but there are cache’ing and performance issues. *YMMV*.
