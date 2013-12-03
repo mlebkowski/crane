@@ -6,7 +6,7 @@
 		"monolog/monolog": "1.5.*",
 		"igorw/config-service-provider": "*",
 		"symfony/config": "~2.3",
-		"cilex/console-service-provider": "dev-master",
+		"cilex/console-service-provider": "dev-master@dev",
 		"symfony/finder": "~2.0",
 		"justinrainbow/json-schema": "~1.3"
 	},
@@ -18,12 +18,6 @@
 			"Nassau": "src/",
 			"Crane": "src/",
 			"Symfony\\Component\\Process": "src/"
-		}
-	},
-	"config": {
-		"extra": {
-			"propel/propel": "2.0.0-alpha2",
-			"propel/propel-service-provider": "2.*@dev"
 		}
 	},
 	"bin": ["crane"],
