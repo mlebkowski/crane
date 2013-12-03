@@ -6,23 +6,28 @@
 	"properties": {
 		"name": {
 			"type": "string",
+			"description": "Globally unique name for your project. May be in form of vendor/project",
 			"pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]*(/[a-zA-Z0-9_-]+)*$"
 		},
 		"user": {
 			"type": "string",
+			"description": "Docker user for building images",
 			"pattern": "^[a-zA-Z0-9_-]+$"
 		},
 		"main-image": {
+			"description": "This should point to your main container name in images section, like application server",
 			"type": "string"
 		},
 		"repository": {
 			"type": "array",
+			"description": "This git repository will be cloned as a volume on target container",
 			"properties": {
 				"url": {
 					"type": "string",
 					"format": "uri"
 				},
 				"target-volume": {
+					"description": "If an image uses a volume with this name, clone this repo there",
 					"type": "string"
 				},
 				"branch": {
@@ -34,20 +39,24 @@
 		},
 		"fixed-ports": {
 			"type": "array",
+			"description": "Since it’s primarily for dev environment, crane tries to always expose the same ports for these services on the host system",
 			"items": {
 				"oneOf": [
 					{
 						"type": "string",
+						"description": "Use format: image-name/port-number",
 						"format": "[a-z]+/\\d+"
 					},
 					{
-						"type": "null"
+						"type": "null",
+						"description": "The fixed port is calculated based on the fixed-port items count, so you may want to pad it with nulls for future"
 					}
 				]
 			}
 		},
 		"images": {
 			"type": "array",
+			"description": "list of docker containers to build. Dockerfiles for these should be placed in `./images/image-name/Dockerfile`",
 			"patternProperties": {
 				"[a-z]+": {
 					"oneOf": [
@@ -56,6 +65,7 @@
 							"properties": {
 								"ports": {
 									"type": "array",
+									"description": "Expose those TCP ports to the host server",
 									"items": {
 										"type": "integer"
 									},
@@ -63,6 +73,7 @@
 								},
 								"volumes": {
 									"type": "array",
+									"description": "mount these volumes under `/home/volume-name`. They will be shared from the host system path: `~/.crane/project-name/volumes/volume-name`",
 									"items": {
 										"type": "string",
 										"pattern": "^[a-zA-Z0-9_-]+$"
@@ -71,6 +82,7 @@
 								},
 								"require": {
 									"type": "array",
+									"description": "start those containers first, and then pass their exposed ports as via ENV, f.i. `$IMAGE_NAME_PORT`",
 									"items": {
 										"type": "string"
 									},
@@ -81,15 +93,18 @@
 									"pattern": "^[a-zA-Z0-9_-.]+$"
 								},
 								"useTTY": {
+									"description": "Some containers have to be started with the TTY option, -t",
 									"type": "boolean"
 								},
 								"remoteUser": {
+									"description": "If you want to SSH into the container, use this username",
 									"type": "string"
 								}
 							}
 						},
 						{
-							"type": "null"
+							"type": "null",
+							"description": "This is just a base image for other images, just build it, do not start it"
 						}
 					]
 				}
@@ -97,6 +112,7 @@
 			"minItems": 1
 		},
 		"current-target": {
+			"description": "The default target host to start the project on. It must be a valid key from `targets`",
 			"oneOf": [
 				{
 					"type": "string",
@@ -109,6 +125,7 @@
 		},
 		"targets": {
 			"type": "array",
+			"description": "Possible target hosts to start the project on. They should be a valid ssh target, f.i. user@example.com",
 			"patternProperties": {
 				"^[a-z0-9-]+$": {
 					"type": "string"
