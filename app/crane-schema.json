@@ -99,6 +99,10 @@
 								"remoteUser": {
 									"description": "If you want to SSH into the container, use this username",
 									"type": "string"
+								},
+								"identity": {
+									"description": "Use this file as a SSH private key when connecting to container",
+									"type": "string"
 								}
 							}
 						},
