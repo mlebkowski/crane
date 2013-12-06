@@ -55,7 +55,7 @@ class Docker
 	{
 		$this->executor->executeCommand(sprintf('mkdir -p %s', escapeshellarg($this->tmpPath)));
 
-		$tarOutput = $this->getLocalExecutor()->cwd($path)->executeCommand('tar -cf - .');
+		$tarOutput = $this->getLocalExecutor()->cwd($path)->executeCommand('tar -cf - images');
 		$this->executor->executeCommand(sprintf('tar -xf - -C %s', escapeshellarg($this->tmpPath)), $tarOutput);
 	}
 
