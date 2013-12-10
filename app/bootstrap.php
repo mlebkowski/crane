@@ -3,8 +3,7 @@
 $fileName = __DIR__ . '/../vendor/autoload.php';
 if (false === file_exists($fileName))
 {
-	/** @noinspection PhpIncludeInspection */
-	require __DIR__ . '/../../../autoload.php';
+	$fileName = __DIR__ . '/../../../autoload.php';
 }
 /** @noinspection PhpIncludeInspection */
 require_once $fileName;
