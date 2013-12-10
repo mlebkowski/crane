@@ -1,6 +1,13 @@
 <?php
 
-require_once __DIR__ . '/../vendor/autoload.php';
+$fileName = __DIR__ . '/../vendor/autoload.php';
+if (false === file_exists($fileName))
+{
+	/** @noinspection PhpIncludeInspection */
+	require __DIR__ . '/../../../autoload.php';
+}
+/** @noinspection PhpIncludeInspection */
+require_once $fileName;
 
 use Cilex\Provider\Console\Adapter\Silex\ConsoleServiceProvider;
 use Cilex\Provider\Console\ContainerAwareApplication;
