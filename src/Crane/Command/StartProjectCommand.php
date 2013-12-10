@@ -13,6 +13,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 class StartProjectCommand extends AbstractBaseCommand
 {
 	const OPTION_RESTART = 'restart';
+	/** @var OutputInterface */
+	private $output;
 
 	/** @var AssetsLocatorInterface */
 	private $locator;
@@ -28,9 +30,12 @@ class StartProjectCommand extends AbstractBaseCommand
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		$this->locator = $this->getApplication()->getService('project-repository');
+		$this->output = $output;
 
 		$image = $this->getImage($input);
 		$docker = $this->getDocker($input, $output);
+
+		$output->writeln('Starting docker containers…');
 		$container = $this->startImagesWithRequirements($image, $docker, $input->getOption(self::OPTION_RESTART));
 
 		$output->writeln(sprintf('<info>http://local.znanylekarz.pl:%s/</info>', $container->getExposedPort(80)));
@@ -58,10 +63,12 @@ class StartProjectCommand extends AbstractBaseCommand
 		$container = $docker->getDockerContainer($image);
 		if (false === $container->exists())
 		{
+			$this->output->writeln(sprintf('Starting new %s instance', $image->getName()));
 			$container = $docker->startImage($image, $this->locator);
 		}
 		elseif (false === $container->isRunning() || $image->isMain() || $restart)
 		{
+			$this->output->writeln(sprintf('Restarting %s instance', $image->getName()));
 			$docker->remove($container);
 			$container = $docker->startImage($image, $this->locator);
 		}

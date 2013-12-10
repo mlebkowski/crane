@@ -16,6 +16,9 @@ class BuildImagesCommand extends AbstractBaseCommand
 {
 	const OPTION_REBUILD = 'rebuild';
 
+	/** @var OutputInterface */
+	private $output;
+
 	protected function configure()
 	{
 		$this->setName('image:build')->setAliases(['build'])
@@ -29,6 +32,7 @@ class BuildImagesCommand extends AbstractBaseCommand
 	{
 		$image = $this->getImage($input);
 		$docker = $this->getDocker($input, $output);
+		$this->output = $output;
 
 		if (false === $docker->isDockerAvailable())
 		{
@@ -43,6 +47,7 @@ class BuildImagesCommand extends AbstractBaseCommand
 		/** @var ProjectRepository $fetcher */
 		$fetcher = $this->getApplication()->getService('project-repository');
 		$path = $fetcher->getProjectDirectory($image->getProjectName(true));
+		$output->writeln('Copy Dockerfiles to target location…');
 		$docker->copyDockerfiles($path);
 		$this->buildImageWithRequirements($image, $docker, $input->getOption(self::OPTION_REBUILD));
 	}
@@ -57,9 +62,11 @@ class BuildImagesCommand extends AbstractBaseCommand
 
 		if ($docker->isImageBuilt($image) && !$force)
 		{
+			$this->output->writeln(sprintf('Image %s already built', $image->getName()));
 			return ;
 		}
 
+		$this->output->writeln('Building image: ' . $image->getName());
 		$docker->buildImage($image);
 	}
 
