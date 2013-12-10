@@ -10,10 +10,15 @@ class PortMapper
 	const FIXED_RANGE_END = 49150;
 
 	private $ports;
+	/**
+	 * @var null
+	 */
+	private $base;
 
-	public function __construct($ports)
+	public function __construct($ports, $base = null)
 	{
 		$this->ports = array_values($ports);
+		$this->base = $base;
 	}
 
 	public function isPortMapped($portSpec)
@@ -29,10 +34,18 @@ class PortMapper
 		}
 
 		$idx = array_search($portSpec, $this->ports);
-		$slotSize = sizeof($this->ports);
-		$slotsCount = floor((self::FIXED_RANGE_END - self::FIXED_RANGE_START) / $slotSize);
-		$slot = $user->getId() % $slotsCount;
+		if (null === $this->base)
+		{
+			$slotSize = sizeof($this->ports);
+			$slotsCount = floor((self::FIXED_RANGE_END - self::FIXED_RANGE_START) / $slotSize);
+			$slot = $user->getId() % $slotsCount;
+			$start = self::FIXED_RANGE_START + $slot * $slotSize;
+		}
+		else
+		{
+			$start = $this->base;
+		}
 
-		return self::FIXED_RANGE_START + $slot * $slotSize + $idx;
+		return $start + $idx;
 	}
 }

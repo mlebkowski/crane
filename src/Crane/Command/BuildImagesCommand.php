@@ -18,7 +18,7 @@ class BuildImagesCommand extends AbstractBaseCommand
 
 	protected function configure()
 	{
-		$this->setName('image:build')
+		$this->setName('image:build')->setAliases(['build'])
 			->setDescription('Builds docker image and all of its requirements')
 			->addOption(self::OPTION_REBUILD, null, InputOption::VALUE_NONE, 'Force rebuild')
 			->addArgument(self::ARGUMENT_NAME, InputArgument::REQUIRED, 'Project name')
@@ -42,7 +42,7 @@ class BuildImagesCommand extends AbstractBaseCommand
 
 		/** @var ProjectRepository $fetcher */
 		$fetcher = $this->getApplication()->getService('project-repository');
-		$path = $fetcher->getProjectDirectory($image->getProjectName());
+		$path = $fetcher->getProjectDirectory($image->getProjectName(true));
 		$docker->copyDockerfiles($path);
 		$this->buildImageWithRequirements($image, $docker, $input->getOption(self::OPTION_REBUILD));
 	}

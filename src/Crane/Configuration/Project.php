@@ -29,10 +29,23 @@ class Project implements \JsonSerializable
 	{
 		return $this->data['name'];
 	}
+	public function getOriginalName()
+	{
+		return isset($this->data['original-name']) ? $this->data['original-name'] : $this->getName();
+	}
 
 	public function getTargets()
 	{
 		return new \ArrayObject($this->data['targets']);
+	}
+
+	public function getCommands()
+	{
+		$commands = isset($this->data['commands']) ? $this->data['commands'] : [];
+		return new \ArrayObject(array_map(function ($item)
+		{
+			return isset($item['cmd']) ? $item['cmd'] : null;
+		}, $commands));
 	}
 
 	public function useDefaultTarget()
@@ -73,7 +86,7 @@ class Project implements \JsonSerializable
 		$main = $this->data['main-image'];
 		$repository = $this->getRepository();
 		$collection->setNamespace($this->getUser());
-		$collection->setProjectName($this->getName());
+		$collection->setProjectName($this->getName(), $this->getOriginalName());
 		foreach ($this->data['images'] as $name => $settings)
 		{
 			if (null === $settings)
@@ -86,6 +99,7 @@ class Project implements \JsonSerializable
 				/** @var Image $image */
 				$image = (new Image($name))
 						 ->setMain($main === $name)
+						 ->setGeneric($this->isGeneric())
 						 ->setPorts($settings->get('ports'), $this->getPortMapper())
 						 ->setRequiredImages($settings->get('require'))
 						 ->setVolumes($settings->get('volumes'))
@@ -104,9 +118,13 @@ class Project implements \JsonSerializable
 	{
 		if (null === $this->portMapper)
 		{
-			$this->portMapper = new PortMapper($this->data['fixed-ports']);
+			$this->portMapper = new PortMapper($this->data['fixed-ports'], $this->getFixedPortsBase());
 		}
 		return $this->portMapper;
+	}
+	public function getFixedPorts()
+	{
+		return isset($this->data['fixed-ports']) ? $this->data['fixed-ports'] : [];
 	}
 
 	public function jsonSerialize()
@@ -137,5 +155,39 @@ class Project implements \JsonSerializable
 			$this->data['repository']['url'],
 			isset($this->data['repository']['branch']) ? $this->data['repository']['branch'] : Repository::BRANCH_MASTER
 		);
+	}
+
+	public function overrideBranch($branch)
+	{
+		$this->data['repository']['branch'] = $branch;
+	}
+	public function overrideName($name)
+	{
+		if (false === isset($this->data['original-name']))
+		{
+			$this->data['original-name'] = $this->data['name'];
+		}
+		$this->data['name'] = $name;
+	}
+
+	public function getFixedPortsBase()
+	{
+		return isset($this->data['fixed-ports-base']) ? $this->data['fixed-ports-base'] : null;
+	}
+
+	public function setFixedPortsBase($port)
+	{
+		$this->data['fixed-ports-base'] = $port;
+	}
+
+	/**
+	 * Generic means it’s not a single purpose project (like for testing a branch).
+	 * The project is treated as non-generic, if its name was overriden.
+	 *
+	 * @return bool
+	 */
+	public function isGeneric()
+	{
+		return $this->getName() === $this->getOriginalName();
 	}
 }

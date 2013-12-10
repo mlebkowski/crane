@@ -8,6 +8,7 @@ use Crane\Docker\PortMapper;
 class Image
 {
 	const DEFAULT_REMOTE_USER = 'root';
+	private $generic = true;
 	/** @var string */
 	private $remoteUser = self::DEFAULT_REMOTE_USER;
 	/** @var Repository */
@@ -41,6 +42,16 @@ class Image
 		$this->setName($name);
 	}
 
+	public function setGeneric($generic)
+	{
+		$this->generic = (bool) $generic;
+		return $this;
+	}
+	public function isGeneric()
+	{
+		return $this->generic;
+	}
+
 	/**
 	 * @param string $name
 	 * @return $this
@@ -63,9 +74,9 @@ class Image
 	{
 		return sprintf('%s/%s', $this->getCollection()->getNamespace(), $this->getName());
 	}
-	public function getProjectName()
+	public function getProjectName($useOriginal = false)
 	{
-		return $this->getCollection()->getProjectName();
+		return $this->getCollection()->getProjectName($useOriginal);
 	}
 
 	/**
@@ -226,9 +237,19 @@ class Image
 		return $this->collection;
 	}
 
+	/**
+	 * @param string $user
+	 *
+	 * @return string
+	 */
 	public function getRunningName($user)
 	{
-		return sprintf('%s_%s', $user, $this->getName());
+		$projectName = str_replace('/', '_', $this->getProjectName());
+		if ($this->isGeneric())
+		{
+			return sprintf('%s_%s_%s', $user, $projectName, $this->getName());
+		}
+		return sprintf('%s_%s', $projectName, $this->getName());
 	}
 
 	/**

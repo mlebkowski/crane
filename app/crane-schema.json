@@ -14,6 +14,24 @@
 			"description": "Docker user for building images",
 			"pattern": "^[a-zA-Z0-9_-]+$"
 		},
+		"commands": {
+			"patternProperties": {
+				"[a-zA-Z0-9-]+": {
+					"type": "array",
+					"properties":
+					{
+						"cmd": {
+							"type": "string",
+							"required": true
+						},
+						"description": {
+							"type": "string"
+						}
+					},
+					"description": "predefine commands to use with `project:execute`"
+				}
+			}
+		},
 		"main-image": {
 			"description": "This should point to your main container name in images section, like application server",
 			"type": "string"
@@ -53,6 +71,9 @@
 					}
 				]
 			}
+		},
+		"fixed-ports-base": {
+			"type": "integer"
 		},
 		"images": {
 			"type": "array",

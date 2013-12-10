@@ -6,6 +6,7 @@ class ImageCollection extends \ArrayObject
 {
 	private $namespace;
 	private $projectName;
+	private $projectOriginalName;
 
 	/**
 	 * @param mixed $index
@@ -80,17 +81,20 @@ class ImageCollection extends \ArrayObject
 		return $this->namespace;
 	}
 
-	public function setProjectName($projectName)
+	public function setProjectName($projectName, $originalName = null)
 	{
 		$this->projectName = $projectName;
+		$this->projectOriginalName = ($projectName != $originalName) ? $originalName : null;
 	}
 
 	/**
+	 * @param bool $useOriginal
+	 *
 	 * @return string
 	 */
-	public function getProjectName()
+	public function getProjectName($useOriginal = false)
 	{
-		return $this->projectName;
+		return ($useOriginal && $this->projectOriginalName) ? $this->projectOriginalName : $this->projectName;
 	}
 
 }

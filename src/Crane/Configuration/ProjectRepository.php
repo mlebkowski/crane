@@ -105,7 +105,7 @@ class ProjectRepository implements AssetsLocatorInterface
 	public function getAssetPath(Image $image, $name)
 	{
 		return vsprintf('%s/images/%s/%s', [
-			$this->getProjectDirectory($image->getProjectName()),
+			$this->getProjectDirectory($image->getProjectName(true)),
 			$image->getName(),
 			$name
 		]);

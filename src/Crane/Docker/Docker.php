@@ -242,6 +242,7 @@ class Docker
 		$remote = trim($this->executor->executeCommand($command));
 		if ($repository->getUrl() !== $remote)
 		{
+			// TODO: are those still relevant
 			$ignoreKeys = "Host *\n   StrictHostKeyChecking no\n   UserKnownHostsFile=/dev/null\n\n";
 			$this->executor->executeCommand('cat >> ~/.ssh/config', $ignoreKeys);
 

@@ -18,10 +18,14 @@ class InitializeProjectCommand extends Command
 {
 	const ARGUMENT_REPOSITORY = 'uri';
 	const OPTION_BRANCH = 'branch';
+	const OPTION_OVERRIDE_NAME = 'override-name';
+	const OPTION_OVERRIDE_BRANCH = 'override-branch';
 
 	protected function configure()
 	{
-		return $this->setName('project:init')
+		return $this->setName('project:init')->setAliases(['init'])
+			->addOption(self::OPTION_OVERRIDE_NAME, null, InputOption::VALUE_REQUIRED, 'Force this project name instead of the one from configuration')
+			->addOption(self::OPTION_OVERRIDE_BRANCH, null, InputOption::VALUE_REQUIRED, 'Force this branch in target repository')
 			->addOption(self::OPTION_BRANCH, substr(trim(self::OPTION_BRANCH, '-'), 0, 1), InputOption::VALUE_REQUIRED, null, 'master')
 			->addArgument(self::ARGUMENT_REPOSITORY, InputArgument::REQUIRED, 'Crane project configuration GIT repository');
 	}
@@ -58,6 +62,7 @@ class InitializeProjectCommand extends Command
 		}
 
 		$project = new Project($fetcher->getConfig($name));
+		$this->overrideSettings($input, $output, $project);
 
 		/** @var GlobalConfiguration $globalConfiguration */
 		$globalConfiguration = $this->getApplication()->getService('configuration');
@@ -129,14 +134,42 @@ class InitializeProjectCommand extends Command
 
 	private function hasCustomConfigurationForProject(GlobalConfiguration $globalConfiguration, Project $project)
 	{
-		$currentConfig = $globalConfiguration->offsetGet($project->getName());
-		if (null === $currentConfig)
+		if (false === $globalConfiguration->offsetExists($project->getName()))
 		{
 			return false;
 		}
+		$currentConfig = $globalConfiguration->offsetGet($project->getName());
 		$jsonData = $currentConfig->jsonSerialize();
 		unset($jsonData['current-target']);
 		return $jsonData !== $project->jsonSerialize();
+	}
+
+	/**
+	 * @param InputInterface  $input
+	 * @param OutputInterface $output
+	 * @param Project         $project
+	 */
+	private function overrideSettings(InputInterface $input, OutputInterface $output, Project $project)
+	{
+		$branch = $input->getOption(self::OPTION_OVERRIDE_BRANCH);
+		$name = null;
+		if ($branch)
+		{
+			$output->writeln(sprintf('Overriding repository branch: <info>%s</info>… ', $branch));
+			$project->overrideBranch($branch);
+			$name = preg_replace('#(/[^/]+)?$#', '/' . $branch, $project->getName());
+		}
+
+		$name = $input->getOption(self::OPTION_OVERRIDE_NAME) ?: $name;
+		if ($name)
+		{
+			$output->writeln(sprintf('Overriding project name: <info>%s</info>… ', $name));
+
+			$project->overrideName($name);
+
+			$base = sprintf("%u", crc32($name)) % floor(1000 / sizeof($project->getFixedPorts()));
+			$project->setFixedPortsBase(48000 + $base);
+		}
 	}
 
 }
