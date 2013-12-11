@@ -22,6 +22,7 @@ class StartProjectCommand extends AbstractBaseCommand
 	protected function configure()
 	{
 		return $this->setName('project:start')->setAliases(['start'])
+			->setDescription('Start the docker containers and launch the project')
 			->addOption(self::OPTION_RESTART, null, InputOption::VALUE_NONE, 'Restart running instances')
 			->addArgument(self::ARGUMENT_NAME, InputArgument::REQUIRED, 'Project name')
 			->addArgument(self::ARGUMENT_TARGET, null, 'Use this target', null);

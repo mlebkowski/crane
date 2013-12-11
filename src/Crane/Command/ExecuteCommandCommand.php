@@ -17,6 +17,7 @@ class ExecuteCommandCommand extends AbstractBaseCommand
 	protected function configure()
 	{
 		return $this->setName('project:execute')->setAliases(['execute'])
+			->setDescription('Runs a command inside the main container')
 			->addOption(self::OPTION_COMMAND, null, InputOption::VALUE_REQUIRED, 'Use predefined command')
 			->addArgument(self::ARGUMENT_NAME, InputArgument::REQUIRED, 'Project name. It must be running')
 			->addArgument(self::ARGUMENT_COMMANDLINE, InputArgument::OPTIONAL, null);

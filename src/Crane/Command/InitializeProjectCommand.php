@@ -24,6 +24,7 @@ class InitializeProjectCommand extends Command
 	protected function configure()
 	{
 		return $this->setName('project:init')->setAliases(['init'])
+			->setDescription('Configure the project definition and get it ready to start')
 			->addOption(self::OPTION_OVERRIDE_NAME, null, InputOption::VALUE_REQUIRED, 'Force this project name instead of the one from configuration')
 			->addOption(self::OPTION_OVERRIDE_BRANCH, null, InputOption::VALUE_REQUIRED, 'Force this branch in target repository')
 			->addOption(self::OPTION_BRANCH, substr(trim(self::OPTION_BRANCH, '-'), 0, 1), InputOption::VALUE_REQUIRED, null, 'master')

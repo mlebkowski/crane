@@ -18,7 +18,8 @@ class SetupRedirectionsCommand extends AbstractBaseCommand
 	protected function configure()
 	{
 		return $this->setName('setup:redirections')->setAliases(['setup'])
-			   ->addArgument(self::ARGUMENT_NAME, InputArgument::REQUIRED, 'Project name');
+			->setDescription('Help you with setting up your client environment')
+			->addArgument(self::ARGUMENT_NAME, InputArgument::REQUIRED, 'Project name');
 
 	}
 
