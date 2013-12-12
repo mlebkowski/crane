@@ -38,7 +38,7 @@ class ProjectRepository implements AssetsLocatorInterface
 			$error = "Invalid command: 'git-upload-archive";
 			$stdout = $e->getProcess()->getErrorOutput();
 
-			if (substr($stdout, 0, strlen($error)) !== $error)
+			if (false === strpos($stdout, $error))
 			{
 				throw $e;
 			}
